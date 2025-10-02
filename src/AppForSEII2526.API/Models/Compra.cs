@@ -57,7 +57,7 @@ namespace AppForSEII2526.API.Models
         public decimal PrecioFinal { get; set; }
 
         // Relación: Una Compra tiene muchos ProductoCompra
-        public ICollection<ProductoCompra> ProductoCompras { get; set; }
+        public List<ProductoCompra> ProductoCompras { get; set; }
 
         public override bool Equals(object? obj)
         {

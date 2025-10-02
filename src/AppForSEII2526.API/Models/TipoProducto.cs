@@ -25,7 +25,7 @@ namespace AppForSEII2526.API.Models
         public string Nombre { get; set; }
 
         // Relación: Un TipoProducto puede tener muchos Productos
-        public ICollection<Producto> Productos { get; set; }
+        public List<Producto> Productos { get; set; }
 
         public override bool Equals(object? obj)
         {
