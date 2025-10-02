@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel;
+using DataType = System.ComponentModel.DataAnnotations.DataType;
 
 namespace AppForSEII2526.API.Models
 {
@@ -9,6 +10,11 @@ namespace AppForSEII2526.API.Models
         public Compra()
         {
             ProductoCompras = new List<ProductoCompra>();
+            Nombre = string.Empty;
+            Apellido_1 = string.Empty;
+            Apellido_2 = string.Empty;
+            DireccionEnvio = string.Empty;
+            Metodo_Pago = string.Empty;
         }
 
         public Compra(int compraId, string nombre, string apellido1, string apellido2, 
