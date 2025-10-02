@@ -10,7 +10,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<TipoProducto> TipoProducto { get; set; }
     public DbSet<Compra> Compra { get; set; }
     public DbSet<ProductoCompra> ProductoCompra { get; set; }
-    public DbSet<Producto> Productoo { get; set; }
+    public DbSet<Producto> Producto { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
