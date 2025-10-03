@@ -8,7 +8,7 @@ namespace AppForSEII2526.API.Models
         public int Id { get; set; }
 
         [Required, StringLength(20, ErrorMessage = "El nombre no puede ocupar más de 20 caracteres.", MinimumLength = 1)]
-        public string Nombre { get; set; }
+        public string? Nombre { get; set; }
 
         public int ComprasDelBocadillo { get; set; }
 
@@ -21,12 +21,13 @@ namespace AppForSEII2526.API.Models
 
         public EnumTamaño Tamano { get; set; }
 
-        public List<ResenyaBocadillo> ResenyaBocadillo { get; set; } = new List<ResenyaBocadillo>();
+        public List<ResenyaBocadillo> ResenyaBocadillos { get; set; } = new List<ResenyaBocadillo>();
 
         public TipoPan? TipoPan { get; set; }
 
         public Bocadillo()
         {
+            ResenyaBocadillos = new List<ResenyaBocadillo>();
         }
         public Bocadillo(int id, string nombre, int comprasDelBocadillo, int stock, float pVP, int tipoPanId, EnumTamaño tamano, List<ResenyaBocadillo> resenyaBocadillo, TipoPan? tipoPan)
         {
@@ -37,7 +38,7 @@ namespace AppForSEII2526.API.Models
             PVP = pVP;
             TipoPanId = tipoPanId;
             Tamano = tamano;
-            ResenyaBocadillo = resenyaBocadillo;
+            ResenyaBocadillos = resenyaBocadillo;
             TipoPan = tipoPan;
         }
 
@@ -51,7 +52,7 @@ namespace AppForSEII2526.API.Models
                    PVP == bocadillo.PVP &&
                    TipoPanId == bocadillo.TipoPanId &&
                    Tamano == bocadillo.Tamano &&
-                   EqualityComparer<List<ResenyaBocadillo>>.Default.Equals(ResenyaBocadillo, bocadillo.ResenyaBocadillo) &&
+                   EqualityComparer<List<ResenyaBocadillo>>.Default.Equals(ResenyaBocadillos, bocadillo.ResenyaBocadillos) &&
                    EqualityComparer<TipoPan?>.Default.Equals(TipoPan, bocadillo.TipoPan);
         }
 
@@ -65,7 +66,7 @@ namespace AppForSEII2526.API.Models
             hash.Add(PVP);
             hash.Add(TipoPanId);
             hash.Add(Tamano);
-            hash.Add(ResenyaBocadillo);
+            hash.Add(ResenyaBocadillos);
             hash.Add(TipoPan);
             return hash.ToHashCode();
         }
