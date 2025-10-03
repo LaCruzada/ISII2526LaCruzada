@@ -15,10 +15,10 @@ namespace AppForSEII2526.API.Models
         public DateTime FechaInicio { get; set; }
 
         [StringLength(20, ErrorMessage = "El nombre no puede ocupar más de 20 caracteres.", MinimumLength = 1)]
-        public string NombreUsuario { get; set; }
+        public string? NombreUsuario { get; set; }
 
         [StringLength(20, ErrorMessage = "El titulo no puede ocupar más de 20 caracteres.", MinimumLength = 1)]
-        public string Titulo { get; set; }
+        public string? Titulo { get; set; }
 
         public EnumValoracion_General Valoracion_General { get; set; }
 

@@ -17,13 +17,18 @@ namespace AppForSEII2526.API.Models
         public Resenya Resenya { get; set; }
         public ResenyaBocadillo()
         {
+            Bocadillo = new Bocadillo();
+            Resenya = new Resenya();
         }
-        public ResenyaBocadillo(int resenyaBocadilloId, int bocadilloId, int resenyaId, int puntuacion)
+
+        public ResenyaBocadillo(int resenyaBocadilloId, int bocadilloId, int resenyaId, int puntuacion, Bocadillo bocadillo, Resenya resenya)
         {
             ResenyaBocadilloId = resenyaBocadilloId;
             BocadilloId = bocadilloId;
             ResenyaId = resenyaId;
             Puntuacion = puntuacion;
+            Bocadillo = bocadillo;
+            Resenya = resenya;
         }
 
         public override bool Equals(object? obj)

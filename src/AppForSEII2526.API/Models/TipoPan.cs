@@ -8,7 +8,7 @@ namespace AppForSEII2526.API.Models
         public int PanId { get; set; }
 
         [Required, StringLength(20, ErrorMessage = "El nombre no puede ocupar más de 20 caracteres.", MinimumLength = 1)]
-        public string Nombre { get; set; }
+        public string? Nombre { get; set; }
 
         public IList<Bocadillo> Bocadillos { get; set; }
 
