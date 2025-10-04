@@ -1,4 +1,5 @@
-﻿
+﻿using System.ComponentModel.DataAnnotations;
+
 
 namespace AppForSEII2526.API.Models
 {
@@ -31,6 +32,7 @@ namespace AppForSEII2526.API.Models
                    EqualityComparer<IList<Bocadillo>>.Default.Equals(Bocadillos, pan.Bocadillos);
         }
 
+        public ICollection<Bocadillo> Bocadillos { get; set; }
         public override int GetHashCode()
         {
             return HashCode.Combine(PanId, Nombre, Bocadillos);
