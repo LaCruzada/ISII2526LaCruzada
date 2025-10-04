@@ -19,31 +19,30 @@ namespace AppForSEII2526.API.Models
         public string ResenyaBocadillo { get; set; }
 
         public int Stock { get; set; }
-        [Column(TypeName = "float(10,2)")]
-        public float PVP { get; set; }
 
-        public string Tamano { get; set; }
-
-        public int PanId { get; set; }
+        public int TipoPanId { get; set; }
 
         public EnumTamaño Tamano { get; set; }
 
         public List<ResenyaBocadillo> ResenyaBocadillos { get; set; } = new List<ResenyaBocadillo>();
 
+        public TipoPan TipoPan { get; set; }
         public Bocadillo()
         {
             ResenyaBocadillos = new List<ResenyaBocadillo>();
         }
-        public Bocadillo(int id, string nombre, int comprasDelBocadillo, int stock, float pVP, int panId, EnumTamaño tamano, List<ResenyaBocadillo> resenyaBocadillo, TipoPan? tipoPan)
+
+        public Bocadillo(int id, string? nombre, decimal pVP, int comprasDelBocadillo, string resenyaBocadillo, int stock, int panId, EnumTamaño tamano, List<ResenyaBocadillo> resenyaBocadillos, TipoPan tipoPan)
         {
             Id = id;
             Nombre = nombre;
-            ComprasDelBocadillo = comprasDelBocadillo;
-            this.stock = stock;
             PVP = pVP;
-            PanId = panId;
+            ComprasDelBocadillo = comprasDelBocadillo;
+            ResenyaBocadillo = resenyaBocadillo;
+            Stock = stock;
+            TipoPanId = panId;
             Tamano = tamano;
-            ResenyaBocadillos = resenyaBocadillo;
+            ResenyaBocadillos = resenyaBocadillos;
             TipoPan = tipoPan;
         }
 
@@ -52,14 +51,14 @@ namespace AppForSEII2526.API.Models
             return obj is Bocadillo bocadillo &&
                    Id == bocadillo.Id &&
                    Nombre == bocadillo.Nombre &&
-                   ComprasDelBocadillo == bocadillo.ComprasDelBocadillo &&
-        public TipoPan TipoPan { get; set; }
-
                    PVP == bocadillo.PVP &&
+                   ComprasDelBocadillo == bocadillo.ComprasDelBocadillo &&
+                   ResenyaBocadillo == bocadillo.ResenyaBocadillo &&
+                   Stock == bocadillo.Stock &&
                    TipoPanId == bocadillo.TipoPanId &&
                    Tamano == bocadillo.Tamano &&
                    EqualityComparer<List<ResenyaBocadillo>>.Default.Equals(ResenyaBocadillos, bocadillo.ResenyaBocadillos) &&
-                   EqualityComparer<TipoPan?>.Default.Equals(TipoPan, bocadillo.TipoPan);
+                   EqualityComparer<TipoPan>.Default.Equals(TipoPan, bocadillo.TipoPan);
         }
 
         public override int GetHashCode()
@@ -67,14 +66,15 @@ namespace AppForSEII2526.API.Models
             HashCode hash = new HashCode();
             hash.Add(Id);
             hash.Add(Nombre);
-            hash.Add(ComprasDelBocadillo);
-            hash.Add(stock);
             hash.Add(PVP);
-            hash.Add(PanId);
+            hash.Add(ComprasDelBocadillo);
+            hash.Add(ResenyaBocadillo);
+            hash.Add(Stock);
+            hash.Add(TipoPanId);
             hash.Add(Tamano);
             hash.Add(ResenyaBocadillos);
             hash.Add(TipoPan);
             return hash.ToHashCode();
-        public ICollection<CompraBocadillo> ComprasDelBocadillo { get; set; }
+        }
     }
 }

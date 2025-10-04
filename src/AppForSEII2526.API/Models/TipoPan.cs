@@ -11,13 +11,13 @@ namespace AppForSEII2526.API.Models
         [Required, StringLength(20, ErrorMessage = "El nombre no puede ocupar más de 20 caracteres.", MinimumLength = 1)]
         public string? Nombre { get; set; }
 
-        public IList<Bocadillo> Bocadillos { get; set; }
+        public List<Bocadillo> Bocadillos { get; set; }
 
         public TipoPan()
         {
             Bocadillos = new List<Bocadillo>();
         }
-        public TipoPan(int panId, string nombre, IList<Bocadillo> bocadillos)
+        public TipoPan(int panId, string nombre, List<Bocadillo> bocadillos)
         {
             PanId = panId;
             Nombre = nombre;
@@ -29,10 +29,9 @@ namespace AppForSEII2526.API.Models
             return obj is TipoPan pan &&
                    PanId == pan.PanId &&
                    Nombre == pan.Nombre &&
-                   EqualityComparer<IList<Bocadillo>>.Default.Equals(Bocadillos, pan.Bocadillos);
+                   EqualityComparer<List<Bocadillo>>.Default.Equals(Bocadillos, pan.Bocadillos);
         }
 
-        public ICollection<Bocadillo> Bocadillos { get; set; }
         public override int GetHashCode()
         {
             return HashCode.Combine(PanId, Nombre, Bocadillos);
