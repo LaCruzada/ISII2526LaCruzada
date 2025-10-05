@@ -4,9 +4,31 @@ using DataType = System.ComponentModel.DataAnnotations.DataType;
 
 namespace AppForSEII2526.API.Models
 {
-    public class Compra
+    public class Compra_Producto
     {
-       
+        public Compra_Producto()
+        {
+            ProductoCompras = new List<ProductoCompra>();
+            Nombre = string.Empty;
+            Apellido_1 = string.Empty;
+            Apellido_2 = string.Empty;
+            DireccionEnvio = string.Empty;
+            Metodo_Pago = string.Empty;
+        }
+
+        public Compra_Producto(int compraId, string nombre, string apellido1, string apellido2,
+                     string direccionEnvio, DateTime fechaCompra, string metodoPago, decimal precioFinal)
+        {
+            CompraId = compraId;
+            Nombre = nombre;
+            Apellido_1 = apellido1;
+            Apellido_2 = apellido2;
+            DireccionEnvio = direccionEnvio;
+            FechaCompra = fechaCompra;
+            Metodo_Pago = metodoPago;
+            PrecioFinal = precioFinal;
+            ProductoCompras = new List<ProductoCompra>();
+        }
 
         [Key]
         public int CompraId { get; set; }
@@ -41,7 +63,7 @@ namespace AppForSEII2526.API.Models
 
         public override bool Equals(object? obj)
         {
-            return obj is Compra compra &&
+            return obj is Compra_Producto compra &&
                    CompraId == compra.CompraId &&
                    FechaCompra == compra.FechaCompra &&
                    nBocadillos == compra.nBocadillos &&

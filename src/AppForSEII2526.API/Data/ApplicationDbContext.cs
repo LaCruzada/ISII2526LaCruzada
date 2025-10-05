@@ -11,7 +11,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 
     // Entidades existentes
     public DbSet<TipoProducto> TipoProducto { get; set; }
-    public DbSet<Compra> Compra { get; set; }
+    public DbSet<Compra_Producto> Compra { get; set; }
     public DbSet<ProductoCompra> ProductoCompra { get; set; }
     public DbSet<Producto> Producto { get; set; }
     public DbSet<TipoBocadillo> TipoBocadillos { get; set; }
