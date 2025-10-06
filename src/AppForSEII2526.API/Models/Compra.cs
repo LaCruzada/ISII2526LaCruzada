@@ -28,15 +28,18 @@ namespace AppForSEII2526.API.Models
         public List<ApplicationUser> Cliente { get; set; } = new List<ApplicationUser>();
 
 
-        public Compra(int compraId, DateTime fechaCompra, int nBocadillos, float precioTotal, MetodoPago metodoPago, List<ApplicationUser> usuario, List<CompraBocadillo> BocadillosComprados)
+        public Compra(int compraId, DateTime fechaCompra, int nBocadillos, float precioTotal, MetodoPago metodoPago, List<ApplicationUser> Cliente, List<CompraBocadillo> BocadillosComprados)
         {
             CompraId = compraId;
             FechaCompra = fechaCompra;
             this.nBocadillos = nBocadillos;
             PrecioTotal = precioTotal;
             this.MetodoPago = metodoPago;
-            this.Cliente = usuario;
+            this.Cliente = Cliente;
             BocadillosComprados = BocadillosComprados;
+        }
+        public Compra()
+        {
         }
 
         public override bool Equals(object? obj)
