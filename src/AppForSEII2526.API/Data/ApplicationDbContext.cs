@@ -11,7 +11,10 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 
     // Entidades existentes
     public DbSet<TipoProducto> TipoProducto { get; set; }
-    public DbSet<Compra_Producto> Compra { get; set; }
+    public DbSet<Compra_Producto> Compra_Producto { get; set; }
+    public DbSet<Compra> Compra { get; set; }
+    public DbSet<CompraBocadillo> CompraBocadillo { get; set; }
+
     public DbSet<ProductoCompra> ProductoCompra { get; set; }
     public DbSet<Producto> Producto { get; set; }
     public DbSet<TipoBocadillo> TipoBocadillos { get; set; }
@@ -26,9 +29,9 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     {
         base.OnModelCreating(builder);
 
-        // Configuración de clave compuesta para ProductoCompra
         builder.Entity<ProductoCompra>().HasKey(pc => new { pc.CompraId, pc.ProductoId });
         builder.Entity<BonosComprados>().HasKey(pi => new { pi.compraBonoId, pi.bonoId });
         builder.Entity<ResenyaBocadillo>().HasKey(pc => new { pc.BocadilloId, pc.ResenyaId });
+        builder.Entity<CompraBocadillo>().HasKey(pc => new { pc.CompraId, pc.BocadilloId });
     }
 }

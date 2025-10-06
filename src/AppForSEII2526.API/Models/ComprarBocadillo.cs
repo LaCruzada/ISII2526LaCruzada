@@ -12,7 +12,7 @@ namespace AppForSEII2526.API.Models
         public Bocadillo Bocadillo { get; set; }
 
         public int CompraId { get; set; }
-        public CompraProducto Compra { get; set; }
+        public Compra Compra { get; set; }
 
         [Required]
         public int Cantidad { get; set; }
@@ -30,7 +30,7 @@ namespace AppForSEII2526.API.Models
                    BocadilloId == bocadillo.BocadilloId &&
                    EqualityComparer<Bocadillo>.Default.Equals(Bocadillo, bocadillo.Bocadillo) &&
                    CompraId == bocadillo.CompraId &&
-                   EqualityComparer<CompraProducto>.Default.Equals(Compra, bocadillo.Compra) &&
+                   EqualityComparer<Compra>.Default.Equals(Compra, bocadillo.Compra) &&
                    Cantidad == bocadillo.Cantidad &&
                    Precio == bocadillo.Precio;
         }
@@ -41,7 +41,7 @@ namespace AppForSEII2526.API.Models
         public CompraBocadillo()
         {
         }
-        public CompraBocadillo(int id, int bocadilloId, Bocadillo bocadillo, int compraId, CompraProducto compra, int cantidad, decimal precio)
+        public CompraBocadillo(int id, int bocadilloId, Bocadillo bocadillo, int compraId, Compra compra, int cantidad, decimal precio)
         {
             Id = id;
             BocadilloId = bocadilloId;

@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel;
 using DataType = System.ComponentModel.DataAnnotations.DataType;
@@ -9,6 +9,7 @@ namespace AppForSEII2526.API.Models
     {
         public Compra_Producto()
         {
+
             ProductoCompras = new List<ProductoCompra>();
             Nombre = string.Empty;
             Apellido_1 = string.Empty;
@@ -62,7 +63,7 @@ namespace AppForSEII2526.API.Models
         [Column(TypeName = "decimal(18,2)")]
         public decimal PrecioFinal { get; set; }
 
-        // Relaci�n: Una Compra tiene muchos ProductoCompra
+        // Relación: Una Compra tiene muchos ProductoCompra
         public List<ProductoCompra> ProductoCompras { get; set; }
 
         public override bool Equals(object? obj)
