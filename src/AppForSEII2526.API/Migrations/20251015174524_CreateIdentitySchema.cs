@@ -397,26 +397,33 @@ namespace AppForSEII2526.API.Migrations
                 name: "CompraBocadillo",
                 columns: table => new
                 {
-                    BocadilloId = table.Column<int>(type: "int", nullable: false),
-                    CompraId = table.Column<int>(type: "int", nullable: false),
-                    Id = table.Column<int>(type: "int", nullable: false),
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    NombreBocadillo = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    TipopanPanId = table.Column<int>(type: "int", nullable: false),
                     Cantidad = table.Column<int>(type: "int", nullable: false),
-                    Precio = table.Column<decimal>(type: "decimal(10,2)", nullable: false)
+                    Precio = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
+                    BocadilloId = table.Column<int>(type: "int", nullable: true),
+                    CompraId = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_CompraBocadillo", x => new { x.CompraId, x.BocadilloId });
+                    table.PrimaryKey("PK_CompraBocadillo", x => x.Id);
                     table.ForeignKey(
                         name: "FK_CompraBocadillo_Bocadillos_BocadilloId",
                         column: x => x.BocadilloId,
                         principalTable: "Bocadillos",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_CompraBocadillo_Compra_CompraId",
                         column: x => x.CompraId,
                         principalTable: "Compra",
-                        principalColumn: "CompraId",
+                        principalColumn: "CompraId");
+                    table.ForeignKey(
+                        name: "FK_CompraBocadillo_TipoPanes_TipopanPanId",
+                        column: x => x.TipopanPanId,
+                        principalTable: "TipoPanes",
+                        principalColumn: "PanId",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -545,6 +552,16 @@ namespace AppForSEII2526.API.Migrations
                 name: "IX_CompraBocadillo_BocadilloId",
                 table: "CompraBocadillo",
                 column: "BocadilloId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CompraBocadillo_CompraId",
+                table: "CompraBocadillo",
+                column: "CompraId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CompraBocadillo_TipopanPanId",
+                table: "CompraBocadillo",
+                column: "TipopanPanId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Producto_TipoProductoId",
