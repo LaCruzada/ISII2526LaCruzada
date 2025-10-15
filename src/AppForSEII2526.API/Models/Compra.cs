@@ -21,6 +21,7 @@ namespace AppForSEII2526.API.Models
         [Required]
         public float PrecioTotal { get; set; } = 0f;
 
+        [Required]
         public MetodoPago MetodoPago { get; set; }
 
         public List<CompraBocadillo> BocadillosComprados { get; set; } = new List<CompraBocadillo>();

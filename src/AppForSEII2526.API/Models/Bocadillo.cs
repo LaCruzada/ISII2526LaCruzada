@@ -10,7 +10,7 @@ namespace AppForSEII2526.API.Models
         public int Id { get; set; }
 
         [Required, StringLength(20, ErrorMessage = "El nombre no puede ocupar más de 20 caracteres.", MinimumLength = 1)]
-        public string? Nombre { get; set; }
+        public string Nombre { get; set; }
 
         [Column(TypeName = "decimal(10,2)")]
         public decimal PVP { get; set; }

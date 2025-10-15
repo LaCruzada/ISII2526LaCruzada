@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AppForSEII2526.API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251006141220_CreateIdentitySchema")]
+    [Migration("20251015174524_CreateIdentitySchema")]
     partial class CreateIdentitySchema
     {
         /// <inheritdoc />
@@ -233,24 +233,39 @@ namespace AppForSEII2526.API.Migrations
 
             modelBuilder.Entity("AppForSEII2526.API.Models.CompraBocadillo", b =>
                 {
-                    b.Property<int>("CompraId")
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<int>("BocadilloId")
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("BocadilloId")
                         .HasColumnType("int");
 
                     b.Property<int>("Cantidad")
                         .HasColumnType("int");
 
-                    b.Property<int>("Id")
+                    b.Property<int?>("CompraId")
                         .HasColumnType("int");
+
+                    b.Property<string>("NombreBocadillo")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<decimal>("Precio")
                         .HasColumnType("decimal(10,2)");
 
-                    b.HasKey("CompraId", "BocadilloId");
+                    b.Property<int>("TipopanPanId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
 
                     b.HasIndex("BocadilloId");
+
+                    b.HasIndex("CompraId");
+
+                    b.HasIndex("TipopanPanId");
 
                     b.ToTable("CompraBocadillo");
                 });
@@ -679,21 +694,21 @@ namespace AppForSEII2526.API.Migrations
 
             modelBuilder.Entity("AppForSEII2526.API.Models.CompraBocadillo", b =>
                 {
-                    b.HasOne("AppForSEII2526.API.Models.Bocadillo", "Bocadillo")
+                    b.HasOne("AppForSEII2526.API.Models.Bocadillo", null)
                         .WithMany("CompraBocadillos")
-                        .HasForeignKey("BocadilloId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("BocadilloId");
 
-                    b.HasOne("AppForSEII2526.API.Models.Compra", "Compra")
+                    b.HasOne("AppForSEII2526.API.Models.Compra", null)
                         .WithMany("BocadillosComprados")
-                        .HasForeignKey("CompraId")
+                        .HasForeignKey("CompraId");
+
+                    b.HasOne("AppForSEII2526.API.Models.TipoPan", "Tipopan")
+                        .WithMany()
+                        .HasForeignKey("TipopanPanId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Bocadillo");
-
-                    b.Navigation("Compra");
+                    b.Navigation("Tipopan");
                 });
 
             modelBuilder.Entity("AppForSEII2526.API.Models.Producto", b =>
