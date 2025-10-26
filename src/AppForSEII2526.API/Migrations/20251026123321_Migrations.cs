@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace AppForSEII2526.API.Migrations
 {
     /// <inheritdoc />
-    public partial class CreateIdentitySchema : Migration
+    public partial class Migrations : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -369,19 +369,17 @@ namespace AppForSEII2526.API.Migrations
                 name: "BonosComprados",
                 columns: table => new
                 {
-                    compraBonoId = table.Column<int>(type: "int", nullable: false),
-                    bonoId = table.Column<int>(type: "int", nullable: false),
-                    BonosId = table.Column<int>(type: "int", nullable: false),
-                    Cantidad = table.Column<int>(type: "int", nullable: false),
+                    BonoId = table.Column<int>(type: "int", nullable: false),
                     CompraId = table.Column<int>(type: "int", nullable: false),
+                    Cantidad = table.Column<int>(type: "int", nullable: false),
                     PrecioBono = table.Column<float>(type: "real", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_BonosComprados", x => new { x.compraBonoId, x.bonoId });
+                    table.PrimaryKey("PK_BonosComprados", x => new { x.BonoId, x.CompraId });
                     table.ForeignKey(
-                        name: "FK_BonosComprados_BonoBocadillo_bonoId",
-                        column: x => x.bonoId,
+                        name: "FK_BonosComprados_BonoBocadillo_BonoId",
+                        column: x => x.BonoId,
                         principalTable: "BonoBocadillo",
                         principalColumn: "BonoId",
                         onDelete: ReferentialAction.Cascade);
@@ -537,11 +535,6 @@ namespace AppForSEII2526.API.Migrations
                 name: "IX_BonoBocadillo_tipoBocadillosidTipo",
                 table: "BonoBocadillo",
                 column: "tipoBocadillosidTipo");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_BonosComprados_bonoId",
-                table: "BonosComprados",
-                column: "bonoId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_BonosComprados_CompraId",
