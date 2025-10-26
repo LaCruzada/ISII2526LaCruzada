@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AppForSEII2526.API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251015174524_CreateIdentitySchema")]
-    partial class CreateIdentitySchema
+    [Migration("20251026123321_Migrations")]
+    partial class Migrations
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -179,29 +179,21 @@ namespace AppForSEII2526.API.Migrations
 
             modelBuilder.Entity("AppForSEII2526.API.Models.BonosComprados", b =>
                 {
-                    b.Property<int>("compraBonoId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("bonoId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("BonosId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Cantidad")
+                    b.Property<int>("BonoId")
                         .HasColumnType("int");
 
                     b.Property<int>("CompraId")
                         .HasColumnType("int");
 
+                    b.Property<int>("Cantidad")
+                        .HasColumnType("int");
+
                     b.Property<float>("PrecioBono")
                         .HasColumnType("real");
 
-                    b.HasKey("compraBonoId", "bonoId");
+                    b.HasKey("BonoId", "CompraId");
 
                     b.HasIndex("CompraId");
-
-                    b.HasIndex("bonoId");
 
                     b.ToTable("BonosComprados");
                 });
@@ -675,15 +667,15 @@ namespace AppForSEII2526.API.Migrations
 
             modelBuilder.Entity("AppForSEII2526.API.Models.BonosComprados", b =>
                 {
-                    b.HasOne("AppForSEII2526.API.Models.CompraBono", "Compra")
+                    b.HasOne("AppForSEII2526.API.Models.BonoBocadillo", "Bono")
                         .WithMany("bonosComprados")
-                        .HasForeignKey("CompraId")
+                        .HasForeignKey("BonoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("AppForSEII2526.API.Models.BonoBocadillo", "Bono")
+                    b.HasOne("AppForSEII2526.API.Models.CompraBono", "Compra")
                         .WithMany("bonosComprados")
-                        .HasForeignKey("bonoId")
+                        .HasForeignKey("CompraId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
