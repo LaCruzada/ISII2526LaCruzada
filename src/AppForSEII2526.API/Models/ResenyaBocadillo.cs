@@ -4,8 +4,6 @@ namespace AppForSEII2526.API.Models
     public class ResenyaBocadillo
     {
         [Key]
-        public int ResenyaBocadilloId { get; set; }
-
         public int BocadilloId { get; set; }
 
         public int ResenyaId { get; set; }
@@ -21,9 +19,8 @@ namespace AppForSEII2526.API.Models
             Resenya = new Resenya();
         }
 
-        public ResenyaBocadillo(int resenyaBocadilloId, int bocadilloId, int resenyaId, int puntuacion, Bocadillo bocadillo, Resenya resenya)
+        public ResenyaBocadillo(int bocadilloId, int resenyaId, int puntuacion, Bocadillo bocadillo, Resenya resenya)
         {
-            ResenyaBocadilloId = resenyaBocadilloId;
             BocadilloId = bocadilloId;
             ResenyaId = resenyaId;
             Puntuacion = puntuacion;
@@ -34,7 +31,6 @@ namespace AppForSEII2526.API.Models
         public override bool Equals(object? obj)
         {
             return obj is ResenyaBocadillo bocadillo &&
-                   ResenyaBocadilloId == bocadillo.ResenyaBocadilloId &&
                    BocadilloId == bocadillo.BocadilloId &&
                    ResenyaId == bocadillo.ResenyaId &&
                    Puntuacion == bocadillo.Puntuacion;
@@ -42,7 +38,7 @@ namespace AppForSEII2526.API.Models
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(ResenyaBocadilloId, BocadilloId, ResenyaId, Puntuacion);
+            return HashCode.Combine(BocadilloId, ResenyaId, Puntuacion);
         }
     }
 }
