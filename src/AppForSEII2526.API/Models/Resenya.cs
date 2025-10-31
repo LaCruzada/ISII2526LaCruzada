@@ -31,7 +31,7 @@ namespace AppForSEII2526.API.Models
         {
             ResenyaBocadillos = new List<ResenyaBocadillo>();
         }
-        public Resenya(int id, string descripcion, DateTime fechaPublicacion, string nombreUsuario, string titulo, EnumValoracion_General valoracion_General, List<ResenyaBocadillo> resenyaBocadillo)
+        public Resenya(int id, string descripcion, DateTime fechaPublicacion, string? nombreUsuario, string titulo, EnumValoracion_General valoracion_General, List<ResenyaBocadillo> resenyaBocadillo)
         {
             Id = id;
             this.descripcion = descripcion;
