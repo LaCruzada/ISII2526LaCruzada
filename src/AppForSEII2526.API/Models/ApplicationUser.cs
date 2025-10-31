@@ -1,9 +1,11 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using System.ComponentModel.DataAnnotations;
 
 namespace AppForSEII2526.API.Models;
 
 // Add profile data for application users by adding properties to the ApplicationUser class
-public class ApplicationUser : IdentityUser {
+public class ApplicationUser : IdentityUser
+{
     public ApplicationUser()
     {
     }
@@ -23,5 +25,6 @@ public class ApplicationUser : IdentityUser {
     [StringLength(50)]
     public string Apellido2 { get; set; }
 
+ 
     public List<CompraBono> Compras { get; set; }
 }
