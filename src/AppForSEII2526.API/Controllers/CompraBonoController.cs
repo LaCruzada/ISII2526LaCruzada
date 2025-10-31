@@ -25,7 +25,6 @@ namespace AppForSEII2526.API.Controllers
             _logger = logger;
         }
 
-        // GET: api/CompraBono/GetBonoCompra?id=1
         [HttpGet]
         [Route("[action]")]
         [ProducesResponseType(typeof(ComprarBonoBocadilloDetalle), (int)HttpStatusCode.OK)]
@@ -105,7 +104,7 @@ namespace AppForSEII2526.API.Controllers
                 .Where(b => bonoIDs.Contains(b.BonoId))
                 .ToListAsync();
 
-            // Asignar precios unitarios de BD si no vienen en el DTO
+          
             foreach (var lineaBono in compraPorCrear.BonosCompra)
             {
                 var b = bonos.FirstOrDefault(b => b.BonoId == lineaBono.BonoID);
@@ -115,7 +114,6 @@ namespace AppForSEII2526.API.Controllers
                 }
             }
 
-            // Buscar o crear usuario
             ApplicationUser usuarioEnBd = null;
             if (!string.IsNullOrWhiteSpace(compraPorCrear.usuario.UserName))
             {
@@ -193,7 +191,7 @@ namespace AppForSEII2526.API.Controllers
             _context.CompraBono.Add(compra);
             await _context.SaveChangesAsync();
 
-            // Recargar la compra con todas las relaciones para construir el DTO de respuesta
+          
             var compraGuardada = await _context.CompraBono
                 .Where(c => c.CompraBonoId == compra.CompraBonoId)
                 .Include(c => c.bonosComprados)
