@@ -36,13 +36,13 @@ namespace AppForSEII2526.API.Models
         [DataType(DataType.Date), Display(Name = "Fecha Bono")]
         [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy}", ApplyFormatInEditMode = true)]
         public DateTime FechaCompraBono {  get; set; }
-
-        [Required]        
+     
         public int nBonos { get; set; }
 
         [Required]
         public float PrecioTotalBono { get; set; } = 0f;
 
+        [Required]
         public MetodoPago metodoPago { get; set; }
 
         public List<BonosComprados> bonosComprados { get; set; } = new List<BonosComprados>();

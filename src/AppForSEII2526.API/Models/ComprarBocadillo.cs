@@ -7,49 +7,44 @@ namespace AppForSEII2526.API.Models
     {
         [Key]
         public int Id { get; set; }
+        [Required]
+        [MaxLength(100)]
+        public string NombreBocadillo { get; set; }
 
-        public int BocadilloId { get; set; }
-        public Bocadillo Bocadillo { get; set; }
-
-        public int CompraId { get; set; }
-        public Compra Compra { get; set; }
+        public TipoPan Tipopan { get; set; }
 
         [Required]
         public int Cantidad { get; set; }
 
         [Required]
         [Column(TypeName = "decimal(10,2)")]
-        public decimal Precio
+        public decimal Precio { get; set; }
+        public CompraBocadillo()
         {
-            get; set;
         }
+
+        public CompraBocadillo(int id, string nombreBocadillo, TipoPan tipopan, int cantidad, decimal precio)
+        {
+            Id = id;
+            NombreBocadillo = nombreBocadillo;
+            Tipopan = tipopan;
+            Cantidad = cantidad;
+            Precio = precio;
+        }
+
         public override bool Equals(object? obj)
         {
             return obj is CompraBocadillo bocadillo &&
                    Id == bocadillo.Id &&
-                   BocadilloId == bocadillo.BocadilloId &&
-                   EqualityComparer<Bocadillo>.Default.Equals(Bocadillo, bocadillo.Bocadillo) &&
-                   CompraId == bocadillo.CompraId &&
-                   EqualityComparer<Compra>.Default.Equals(Compra, bocadillo.Compra) &&
+                   NombreBocadillo == bocadillo.NombreBocadillo &&
+                   EqualityComparer<TipoPan>.Default.Equals(Tipopan, bocadillo.Tipopan) &&
                    Cantidad == bocadillo.Cantidad &&
                    Precio == bocadillo.Precio;
         }
+
         public override int GetHashCode()
         {
-            return HashCode.Combine(Id, BocadilloId, Bocadillo, CompraId, Compra, Cantidad, Precio);
-        }
-        public CompraBocadillo()
-        {
-        }
-        public CompraBocadillo(int id, int bocadilloId, Bocadillo bocadillo, int compraId, Compra compra, int cantidad, decimal precio)
-        {
-            Id = id;
-            BocadilloId = bocadilloId;
-            Bocadillo = bocadillo;
-            CompraId = compraId;
-            Compra = compra;
-            Cantidad = cantidad;
-            Precio = precio;
+            return HashCode.Combine(Id, NombreBocadillo, Tipopan, Cantidad, Precio);
         }
     }
 }

@@ -33,7 +33,7 @@ namespace AppForSEII2526.API.Models
 
         // Relación: Muchos ProductoCompra pertenecen a una Compra
         [ForeignKey("CompraId")]
-        public Compra Compra { get; set; }
+        public Compra_Producto Compra { get; set; }
 
         // Relación: Un ProductoCompra pertenece a un Producto
         [ForeignKey("ProductoId")]
