@@ -258,6 +258,7 @@ namespace AppForSEII2526.UT.ComprarBonoControllerTest
             Assert.Equal("López", actualCompraDetalle.Apellido1);
             Assert.Equal("Martínez", actualCompraDetalle.Apellido2);
             Assert.Equal(MetodoPago.Paypal, actualCompraDetalle.MetodoPago);
+            //Para que acepte el commit
         }
     }
 }
