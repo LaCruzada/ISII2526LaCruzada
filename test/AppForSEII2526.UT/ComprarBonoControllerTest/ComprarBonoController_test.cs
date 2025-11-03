@@ -1,10 +1,14 @@
-ï»¿using AppForSEII2526.API.ComprarBonoBocadilloDTOs;
+using AppForSEII2526.API.ComprarBonoBocadilloDTOs;
 using AppForSEII2526.API.Controllers;
+using AppForSEII2526.API.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using Moq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
+using Xunit;
 
 namespace AppForSEII2526.UT.ComprarBonoControllerTest
 {
@@ -12,27 +16,29 @@ namespace AppForSEII2526.UT.ComprarBonoControllerTest
     {
         private const string _userName = "juan.perez@uclm.es";
         private const string _nombreCliente = "Juan";
-        private const string _apellido1Cliente = "PÃ©rez";
-        private const string _apellido2Cliente = "GarcÃ­a";
+        private const string _apellido1Cliente = "Pérez";
+        private const string _apellido2Cliente = "García";
 
         private const string _bono1Nombre = "Bono Vegetal 5";
         private const string _tipo1Nombre = "Vegetal";
         private const string _bono2Nombre = "Bono Mixto 10";
         private const string _tipo2Nombre = "Mixto";
+        private const string _bono3Nombre = "Bono Vegetal Premium";
 
         public ComprarBonoController_test()
         {
             var tiposBocadillo = new List<TipoBocadillo>()
-                {
-                    new TipoBocadillo(1, _tipo1Nombre, new List<BonoBocadillo>()),
-                    new TipoBocadillo(2, _tipo2Nombre, new List<BonoBocadillo>()),
-                };
+            {
+                new TipoBocadillo(1, _tipo1Nombre, new List<BonoBocadillo>()),
+                new TipoBocadillo(2, _tipo2Nombre, new List<BonoBocadillo>()),
+            };
 
             var bonos = new List<BonoBocadillo>()
-                {
-                    new BonoBocadillo(1, 10, 5, _bono1Nombre, 25.0f, tiposBocadillo[0], new List<BonosComprados>()),
-                    new BonoBocadillo(2, 0, 10, _bono2Nombre, 45.0f, tiposBocadillo[1], new List<BonosComprados>()),
-                };
+            {
+                new BonoBocadillo(1, 10, 5, _bono1Nombre, 25.0f, tiposBocadillo[0], new List<BonosComprados>()),
+                new BonoBocadillo(2, 0, 10, _bono2Nombre, 45.0f, tiposBocadillo[1], new List<BonosComprados>()),
+                new BonoBocadillo(3, 5, 8, _bono3Nombre, 35.0f, tiposBocadillo[0], new List<BonosComprados>()),
+            };
 
             ApplicationUser user = new ApplicationUser
             {
@@ -60,6 +66,166 @@ namespace AppForSEII2526.UT.ComprarBonoControllerTest
             _context.SaveChanges();
         }
 
+        [Fact]
+        [Trait("LevelTesting", "Unit Testing")]
+        [Trait("Database", "WithoutFixture")]
+        public async Task GetBonoParaCompra_SinFiltros_Success_test()
+        {
+            // Arrange
+            var mock = new Mock<ILogger<CompraBonoController>>();
+            ILogger<CompraBonoController> logger = mock.Object;
+
+            var controller = new CompraBonoController(_context, logger);
+
+            // Act
+            var result = await controller.GetBonoParaCompra(null, null);
+
+            //Assert
+            //we check that the response type is OK and obtain the list returned
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var bonos = Assert.IsAssignableFrom<IList<ComprarBonosDTO>>(okResult.Value);
+
+            //we check that we get all bonos
+            Assert.Equal(3, bonos.Count);
+            Assert.Contains(bonos, b => b.Nombre == _bono1Nombre);
+            Assert.Contains(bonos, b => b.Nombre == _bono2Nombre);
+            Assert.Contains(bonos, b => b.Nombre == _bono3Nombre);
+
+        }
+
+        [Fact]
+        [Trait("LevelTesting", "Unit Testing")]
+        [Trait("Database", "WithoutFixture")]
+        public async Task GetBonoParaCompra_FiltroNombre_Success_test()
+        {
+            // Arrange
+            var mock = new Mock<ILogger<CompraBonoController>>();
+            ILogger<CompraBonoController> logger = mock.Object;
+
+            var controller = new CompraBonoController(_context, logger);
+
+            // Act
+            var result = await controller.GetBonoParaCompra("Vegetal", null);
+
+            //Assert
+            //we check that the response type is OK and obtain the list returned
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var bonos = Assert.IsAssignableFrom<IList<ComprarBonosDTO>>(okResult.Value);
+
+            //we check that we only get bonos with "Vegetal" in the name
+            Assert.Equal(2, bonos.Count);
+            Assert.All(bonos, b => Assert.Contains("Vegetal", b.Nombre));
+            Assert.Contains(bonos, b => b.Nombre == _bono1Nombre);
+            Assert.Contains(bonos, b => b.Nombre == _bono3Nombre);
+
+        }
+
+        [Fact]
+        [Trait("LevelTesting", "Unit Testing")]
+        [Trait("Database", "WithoutFixture")]
+        public async Task GetBonoParaCompra_FiltroTipo_Success_test()
+        {
+            // Arrange
+            var mock = new Mock<ILogger<CompraBonoController>>();
+            ILogger<CompraBonoController> logger = mock.Object;
+
+            var controller = new CompraBonoController(_context, logger);
+
+            // Act
+            var result = await controller.GetBonoParaCompra(null, _tipo2Nombre);
+
+            //Assert
+            //we check that the response type is OK and obtain the list returned
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var bonos = Assert.IsAssignableFrom<IList<ComprarBonosDTO>>(okResult.Value);
+
+            //we check that we only get bonos of type "Mixto"
+            Assert.Single(bonos);
+            Assert.Equal(_bono2Nombre, bonos[0].Nombre);
+            Assert.Equal(_tipo2Nombre, bonos[0].Tipo);
+
+        }
+
+        [Fact]
+        [Trait("LevelTesting", "Unit Testing")]
+        [Trait("Database", "WithoutFixture")]
+        public async Task GetBonoParaCompra_FiltroNombreYTipo_Success_test()
+        {
+            // Arrange
+            var mock = new Mock<ILogger<CompraBonoController>>();
+            ILogger<CompraBonoController> logger = mock.Object;
+
+            var controller = new CompraBonoController(_context, logger);
+
+            // Act
+            var result = await controller.GetBonoParaCompra("Vegetal", _tipo1Nombre);
+
+            //Assert
+            //we check that the response type is OK and obtain the list returned
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var bonos = Assert.IsAssignableFrom<IList<ComprarBonosDTO>>(okResult.Value);
+
+            //we check that we only get bonos with "Vegetal" in the name and type "Vegetal"
+            Assert.Equal(2, bonos.Count);
+            Assert.All(bonos, b =>
+            {
+                Assert.Contains("Vegetal", b.Nombre);
+                Assert.Equal(_tipo1Nombre, b.Tipo);
+            });
+
+        }
+
+        [Fact]
+        [Trait("LevelTesting", "Unit Testing")]
+        [Trait("Database", "WithoutFixture")]
+        public async Task GetBonoParaCompra_NoResults_NotFound_test()
+        {
+            // Arrange
+            var mock = new Mock<ILogger<CompraBonoController>>();
+            ILogger<CompraBonoController> logger = mock.Object;
+
+            var controller = new CompraBonoController(_context, logger);
+
+            // Act
+            var result = await controller.GetBonoParaCompra("Inexistente", null);
+
+            //Assert
+            //we check that the response type is NotFound
+            var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
+            Assert.Equal("No hay bonos que cumplan los requisitos", notFoundResult.Value);
+
+        }
+
+        [Fact]
+        [Trait("LevelTesting", "Unit Testing")]
+        [Trait("Database", "WithoutFixture")]
+        public async Task GetBonoParaCompra_VerificarDatosDTO_Success_test()
+        {
+            // Arrange
+            var mock = new Mock<ILogger<CompraBonoController>>();
+            ILogger<CompraBonoController> logger = mock.Object;
+
+            var controller = new CompraBonoController(_context, logger);
+
+            // Act
+            var result = await controller.GetBonoParaCompra(_bono1Nombre, null);
+
+            //Assert
+            //we check that the response type is OK and obtain the list returned
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var bonos = Assert.IsAssignableFrom<IList<ComprarBonosDTO>>(okResult.Value);
+
+            //we verify that the DTO has the correct data
+            Assert.Single(bonos);
+            var bonoDTO = bonos[0];
+            Assert.Equal(1, bonoDTO.BonoID);
+            Assert.Equal(_bono1Nombre, bonoDTO.Nombre);
+            Assert.Equal(25.0, bonoDTO.PrecioCompra);
+            Assert.Equal(1, bonoDTO.Cantidad); // Default value
+            Assert.Equal(_tipo1Nombre, bonoDTO.Tipo);
+
+        }
+
         public static IEnumerable<object[]> TestCasesFor_CrearCompraBono_Error()
         {
             var compraSinBonos = new ComprarBonoBocadilloPost
@@ -76,9 +242,9 @@ namespace AppForSEII2526.UT.ComprarBonoControllerTest
             };
 
             var bonosCompra = new List<BonosCompradosDTO>
-                {
-                    new BonosCompradosDTO(1, _bono1Nombre, 25.0, 2, _tipo1Nombre)
-                };
+            {
+                new BonosCompradosDTO(1, _bono1Nombre, 25.0, 2, _tipo1Nombre)
+            };
 
             var compraSinNombre = new ComprarBonoBocadilloPost
             {
@@ -109,9 +275,9 @@ namespace AppForSEII2526.UT.ComprarBonoControllerTest
             var compraBonoNoExiste = new ComprarBonoBocadilloPost
             {
                 BonosCompra = new List<BonosCompradosDTO>
-                    {
-                        new BonosCompradosDTO(999, "Bono Inexistente", 25.0, 1, _tipo1Nombre)
-                    },
+                {
+                    new BonosCompradosDTO(999, "Bono Inexistente", 25.0, 1, _tipo1Nombre)
+                },
                 usuario = new UsuarioCompraDTO
                 {
                     Nombre = _nombreCliente,
@@ -125,9 +291,9 @@ namespace AppForSEII2526.UT.ComprarBonoControllerTest
             var compraBonoSinStock = new ComprarBonoBocadilloPost
             {
                 BonosCompra = new List<BonosCompradosDTO>
-                    {
-                        new BonosCompradosDTO(2, _bono2Nombre, 45.0, 1, _tipo2Nombre)
-                    },
+                {
+                    new BonosCompradosDTO(2, _bono2Nombre, 45.0, 1, _tipo2Nombre)
+                },
                 usuario = new UsuarioCompraDTO
                 {
                     Nombre = _nombreCliente,
@@ -139,13 +305,13 @@ namespace AppForSEII2526.UT.ComprarBonoControllerTest
             };
 
             var allTests = new List<object[]>
-                {
-                    new object[] { compraSinBonos, "Error! Debes incluir al menos un bono para comprarlo" },
-                    new object[] { compraSinNombre, "Error! Debes proporcionar Nombre y Apellido1 del cliente (campos obligatorios)." },
-                    new object[] { compraSinApellido, "Error! Debes proporcionar Nombre y Apellido1 del cliente (campos obligatorios)." },
-                    new object[] { compraBonoNoExiste, "Error! El bono con nombre Bono Inexistente y con ID 999 no existe en la base de datos." },
-                    new object[] { compraBonoSinStock, $"Error! El bono con nombre {_bono2Nombre} solo tiene 0 unidades disponibles, pero has seleccionado 1 unidades para comprar." }
-                };
+            {
+                new object[] { compraSinBonos, "Error! Debes incluir al menos un bono para comprarlo" },
+                new object[] { compraSinNombre, "Error! Debes proporcionar Nombre y Apellido1 del cliente (campos obligatorios)." },
+                new object[] { compraSinApellido, "Error! Debes proporcionar Nombre y Apellido1 del cliente (campos obligatorios)." },
+                new object[] { compraBonoNoExiste, "Error! El bono con nombre Bono Inexistente y con ID 999 no existe en la base de datos." },
+                new object[] { compraBonoSinStock, $"Error! El bono con nombre {_bono2Nombre} solo tiene 0 unidades disponibles, pero has seleccionado 1 unidades para comprar." }
+            };
 
             return allTests;
         }
@@ -165,14 +331,16 @@ namespace AppForSEII2526.UT.ComprarBonoControllerTest
             // Act
             var result = await controller.CrearCompraBono(compraDTO);
 
-           
+            //Assert
+            //we check that the response type is BadRequest and obtain the error returned
             var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
             var problemDetails = Assert.IsType<ValidationProblemDetails>(badRequestResult.Value);
 
             var errorActual = problemDetails.Errors.First().Value[0];
 
-            
+            //we check that the expected error message and actual are the same
             Assert.StartsWith(errorExpected, errorActual);
+
         }
 
         [Fact]
@@ -189,9 +357,9 @@ namespace AppForSEII2526.UT.ComprarBonoControllerTest
             var compraDTO = new ComprarBonoBocadilloPost
             {
                 BonosCompra = new List<BonosCompradosDTO>
-                    {
-                        new BonosCompradosDTO(1, _bono1Nombre, 25.0, 2, _tipo1Nombre)
-                    },
+                {
+                    new BonosCompradosDTO(1, _bono1Nombre, 25.0, 2, _tipo1Nombre)
+                },
                 usuario = new UsuarioCompraDTO
                 {
                     Nombre = _nombreCliente,
@@ -205,11 +373,12 @@ namespace AppForSEII2526.UT.ComprarBonoControllerTest
             // Act
             var result = await controller.CrearCompraBono(compraDTO);
 
-        
+            //Assert
+            //we check that the response type is BadRequest and obtain the error returned
             var createdResult = Assert.IsType<CreatedAtActionResult>(result);
             var actualCompraDetalle = Assert.IsType<ComprarBonoBocadilloDetalle>(createdResult.Value);
 
-            
+            // Verificamos los datos principales de la compra
             Assert.Equal(_nombreCliente, actualCompraDetalle.NombreCliente);
             Assert.Equal(_apellido1Cliente, actualCompraDetalle.Apellido1);
             Assert.Equal(_apellido2Cliente, actualCompraDetalle.Apellido2);
@@ -218,6 +387,7 @@ namespace AppForSEII2526.UT.ComprarBonoControllerTest
             Assert.Equal(1, actualCompraDetalle.BonosComprados[0].BonoID);
             Assert.Equal(2, actualCompraDetalle.BonosComprados[0].Cantidad);
             Assert.Equal(25.0, actualCompraDetalle.BonosComprados[0].PrecioUnitario);
+
         }
 
         [Fact]
@@ -234,14 +404,14 @@ namespace AppForSEII2526.UT.ComprarBonoControllerTest
             var compraDTO = new ComprarBonoBocadilloPost
             {
                 BonosCompra = new List<BonosCompradosDTO>
-                    {
-                        new BonosCompradosDTO(1, _bono1Nombre, 25.0, 1, _tipo1Nombre)
-                    },
+                {
+                    new BonosCompradosDTO(1, _bono1Nombre, 25.0, 1, _tipo1Nombre)
+                },
                 usuario = new UsuarioCompraDTO
                 {
-                    Nombre = "MarÃ­a",
-                    Apellido1 = "LÃ³pez",
-                    Apellido2 = "MartÃ­nez"
+                    Nombre = "María",
+                    Apellido1 = "López",
+                    Apellido2 = "Martínez"
                 },
                 MetodoPago = MetodoPago.Paypal
             };
@@ -249,16 +419,17 @@ namespace AppForSEII2526.UT.ComprarBonoControllerTest
             // Act
             var result = await controller.CrearCompraBono(compraDTO);
 
-            // Assert
+            //Assert
+            //we check that the response type is BadRequest and obtain the error returned
             var createdResult = Assert.IsType<CreatedAtActionResult>(result);
             var actualCompraDetalle = Assert.IsType<ComprarBonoBocadilloDetalle>(createdResult.Value);
 
-            // Verificamos que se creÃ³ un nuevo usuario
-            Assert.Equal("MarÃ­a", actualCompraDetalle.NombreCliente);
-            Assert.Equal("LÃ³pez", actualCompraDetalle.Apellido1);
-            Assert.Equal("MartÃ­nez", actualCompraDetalle.Apellido2);
+            // Verificamos que se creó un nuevo usuario
+            Assert.Equal("María", actualCompraDetalle.NombreCliente);
+            Assert.Equal("López", actualCompraDetalle.Apellido1);
+            Assert.Equal("Martínez", actualCompraDetalle.Apellido2);
             Assert.Equal(MetodoPago.Paypal, actualCompraDetalle.MetodoPago);
-            //Para que acepte el commit
+
         }
     }
 }

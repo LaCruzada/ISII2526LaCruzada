@@ -25,6 +25,31 @@ namespace AppForSEII2526.API.Controllers
             _logger = logger;
         }
 
+        // GET: api/CompraBono/GetBonoParaCompra
+        [HttpGet]
+        [Route("[action]")]
+        [ProducesResponseType(typeof(IList<ComprarBonosDTO>), (int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
+        public async Task<ActionResult> GetBonoParaCompra(string? filtroNombre, string? tipoBocadillo)
+        {
+            IList<ComprarBonosDTO> bonos = await _context.BonoBocadillo
+                .Include(b => b.tipoBocadillos)
+                .Include(b => b.bonosComprados).ThenInclude(lc => lc.Compra)
+                .Where(bono => (filtroNombre == null || bono.nombre.Contains(filtroNombre)) &&
+                                 (tipoBocadillo == null || bono.tipoBocadillos.nombreTipo == tipoBocadillo))
+                .OrderBy(bono => bono.nombre)
+                .Select(b => new ComprarBonosDTO(b.BonoId, b.nombre, b.PVP, 1, b.tipoBocadillos.nombreTipo))
+                .ToListAsync();
+
+            if (bonos == null || !bonos.Any())
+            {
+                _logger.LogWarning("No se encontraron bonos que cumplan los criterios de búsqueda");
+                return NotFound("No hay bonos que cumplan los requisitos");
+            }
+
+            return Ok(bonos);
+        }
+
         [HttpGet]
         [Route("[action]")]
         [ProducesResponseType(typeof(ComprarBonoBocadilloDetalle), (int)HttpStatusCode.OK)]
