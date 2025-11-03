@@ -12,7 +12,7 @@ namespace AppForSEII2526.API.Models
 
 
         [Required, StringLength(200, ErrorMessage = "La descripción no puede tener más de 200 caracteres.", MinimumLength = 1)]
-        public string descripcion { get; set; }
+        public string Descripcion { get; set; }
 
         [Required]
         public EnumValoracion_General Valoracion_General { get; set; }
@@ -34,7 +34,7 @@ namespace AppForSEII2526.API.Models
         public Resenya(int id, string descripcion, DateTime fechaPublicacion, string? nombreUsuario, string titulo, EnumValoracion_General valoracion_General, List<ResenyaBocadillo> resenyaBocadillo)
         {
             Id = id;
-            this.descripcion = descripcion;
+            this.Descripcion = descripcion;
             FechaPublicacion = fechaPublicacion;
             NombreUsuario = nombreUsuario;
             Titulo = titulo;
@@ -46,7 +46,7 @@ namespace AppForSEII2526.API.Models
         {
             return obj is Resenya resenya &&
                    Id == resenya.Id &&
-                   descripcion == resenya.descripcion &&
+                   Descripcion == resenya.Descripcion &&
                    FechaPublicacion == resenya.FechaPublicacion &&
                    NombreUsuario == resenya.NombreUsuario &&
                    Titulo == resenya.Titulo &&
@@ -56,7 +56,7 @@ namespace AppForSEII2526.API.Models
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(Id, descripcion, FechaPublicacion, NombreUsuario, Titulo, Valoracion_General, ResenyaBocadillos);
+            return HashCode.Combine(Id, Descripcion, FechaPublicacion, NombreUsuario, Titulo, Valoracion_General, ResenyaBocadillos);
         }
     }
 }
