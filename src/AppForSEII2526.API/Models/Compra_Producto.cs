@@ -30,7 +30,6 @@ namespace AppForSEII2526.API.Models
         [StringLength(200)]
         public string DireccionEnvio { get; set; }
 
-        [Required]
         [DataType(DataType.DateTime)]
         [DisplayName("Fecha de Compra")]
         public DateTime FechaCompra { get; set; }
@@ -39,7 +38,6 @@ namespace AppForSEII2526.API.Models
         [StringLength(50)]
         public string Metodo_Pago { get; set; }
 
-        [Required]
         [Column(TypeName = "decimal(18,2)")]
         public decimal PrecioFinal { get; set; }
 
