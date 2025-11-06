@@ -34,7 +34,7 @@ namespace AppForSEII2526.API.Controllers.ControllerPedirBocadillo
 
                 if (compra == null)
                 {
-                    return NotFound(new { message = "Pedido no encontrado" });
+                    return BadRequest(new { message = "Pedido no encontrado" });
                 }
 
                 var nombreCliente = "Cliente no especificado";
