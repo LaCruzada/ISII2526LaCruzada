@@ -2,10 +2,10 @@
 using Microsoft.EntityFrameworkCore;
 using AppForSEII2526.API.Data;
 using AppForSEII2526.API.Models;
-using AppForSEII2526.API.DTOs;
 using System.Linq;
+using AppForSEII2526.API.DTOs.DTOsPedirBocadillo;
 
-namespace AppForSEII2526.API.Controllers
+namespace AppForSEII2526.API.Controllers.ControllerPedirBocadillo
 {
     [ApiController]
     [Route("api/[controller]")]
