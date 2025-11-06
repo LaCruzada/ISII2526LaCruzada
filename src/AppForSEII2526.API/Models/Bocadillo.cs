@@ -21,7 +21,7 @@ namespace AppForSEII2526.API.Models
         [Required]
         public int TipoPanId { get; set; }
         public string? ResenyaBocadillo { get; set; }
-        public int ComprasDelBocadillo { get; set; }
+        public List<CompraBocadillo> CompraBocadillos { get; set; } = new List<CompraBocadillo>();
 
 
         public int Stock { get; set; }
@@ -31,19 +31,19 @@ namespace AppForSEII2526.API.Models
         public TipoPan TipoPan { get; set; }
         public Bocadillo()
         {
-            ResenyaBocadillos = new List<ResenyaBocadillo>();
+
         }
 
-        public Bocadillo(int id, string nombre, decimal pVP, List<CompraBocadillo> comprasDelBocadillo, string? resenyaBocadillo, int stock, int panId, EnumTamaño tamano, List<ResenyaBocadillo> resenyaBocadillos, TipoPan tipoPan)
+        public Bocadillo(int id, string nombre, decimal pVP, EnumTamaño tamano, int tipoPanId, string? resenyaBocadillo, List<CompraBocadillo> compraBocadillos, int stock, List<ResenyaBocadillo> resenyaBocadillos, TipoPan tipoPan)
         {
             Id = id;
             Nombre = nombre;
             PVP = pVP;
-            CompraBocadillos = comprasDelBocadillo;
-            ResenyaBocadillo = resenyaBocadillo;
-            Stock = stock;
-            TipoPanId = panId;
             Tamano = tamano;
+            TipoPanId = tipoPanId;
+            ResenyaBocadillo = resenyaBocadillo;
+            CompraBocadillos = compraBocadillos;
+            Stock = stock;
             ResenyaBocadillos = resenyaBocadillos;
             TipoPan = tipoPan;
         }
@@ -54,11 +54,11 @@ namespace AppForSEII2526.API.Models
                    Id == bocadillo.Id &&
                    Nombre == bocadillo.Nombre &&
                    PVP == bocadillo.PVP &&
-                   EqualityComparer<List<CompraBocadillo>>.Default.Equals(CompraBocadillos, bocadillo.CompraBocadillos) &&
-                   ResenyaBocadillo == bocadillo.ResenyaBocadillo &&
-                   Stock == bocadillo.Stock &&
-                   TipoPanId == bocadillo.TipoPanId &&
                    Tamano == bocadillo.Tamano &&
+                   TipoPanId == bocadillo.TipoPanId &&
+                   ResenyaBocadillo == bocadillo.ResenyaBocadillo &&
+                   EqualityComparer<List<CompraBocadillo>>.Default.Equals(CompraBocadillos, bocadillo.CompraBocadillos) &&
+                   Stock == bocadillo.Stock &&
                    EqualityComparer<List<ResenyaBocadillo>>.Default.Equals(ResenyaBocadillos, bocadillo.ResenyaBocadillos) &&
                    EqualityComparer<TipoPan>.Default.Equals(TipoPan, bocadillo.TipoPan);
         }
@@ -69,11 +69,11 @@ namespace AppForSEII2526.API.Models
             hash.Add(Id);
             hash.Add(Nombre);
             hash.Add(PVP);
-            hash.Add(CompraBocadillos);
-            hash.Add(ResenyaBocadillo);
-            hash.Add(Stock);
-            hash.Add(TipoPanId);
             hash.Add(Tamano);
+            hash.Add(TipoPanId);
+            hash.Add(ResenyaBocadillo);
+            hash.Add(CompraBocadillos);
+            hash.Add(Stock);
             hash.Add(ResenyaBocadillos);
             hash.Add(TipoPan);
             return hash.ToHashCode();
