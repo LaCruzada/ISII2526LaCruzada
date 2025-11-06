@@ -81,11 +81,11 @@ namespace AppForSEII2526.UT.ComprarBonoControllerTest
             var result = await controller.GetBonoParaCompra(null, null);
 
             //Assert
-            //we check that the response type is OK and obtain the list returned
+            
             var okResult = Assert.IsType<OkObjectResult>(result);
             var bonos = Assert.IsAssignableFrom<IList<ComprarBonosDTO>>(okResult.Value);
 
-            //we check that we get all bonos
+       
             Assert.Equal(3, bonos.Count);
             Assert.Contains(bonos, b => b.Nombre == _bono1Nombre);
             Assert.Contains(bonos, b => b.Nombre == _bono2Nombre);
@@ -108,11 +108,10 @@ namespace AppForSEII2526.UT.ComprarBonoControllerTest
             var result = await controller.GetBonoParaCompra("Vegetal", null);
 
             //Assert
-            //we check that the response type is OK and obtain the list returned
+        
             var okResult = Assert.IsType<OkObjectResult>(result);
             var bonos = Assert.IsAssignableFrom<IList<ComprarBonosDTO>>(okResult.Value);
 
-            //we check that we only get bonos with "Vegetal" in the name
             Assert.Equal(2, bonos.Count);
             Assert.All(bonos, b => Assert.Contains("Vegetal", b.Nombre));
             Assert.Contains(bonos, b => b.Nombre == _bono1Nombre);
@@ -135,11 +134,11 @@ namespace AppForSEII2526.UT.ComprarBonoControllerTest
             var result = await controller.GetBonoParaCompra(null, _tipo2Nombre);
 
             //Assert
-            //we check that the response type is OK and obtain the list returned
+        
             var okResult = Assert.IsType<OkObjectResult>(result);
             var bonos = Assert.IsAssignableFrom<IList<ComprarBonosDTO>>(okResult.Value);
 
-            //we check that we only get bonos of type "Mixto"
+           
             Assert.Single(bonos);
             Assert.Equal(_bono2Nombre, bonos[0].Nombre);
             Assert.Equal(_tipo2Nombre, bonos[0].Tipo);
@@ -161,11 +160,11 @@ namespace AppForSEII2526.UT.ComprarBonoControllerTest
             var result = await controller.GetBonoParaCompra("Vegetal", _tipo1Nombre);
 
             //Assert
-            //we check that the response type is OK and obtain the list returned
+      
             var okResult = Assert.IsType<OkObjectResult>(result);
             var bonos = Assert.IsAssignableFrom<IList<ComprarBonosDTO>>(okResult.Value);
 
-            //we check that we only get bonos with "Vegetal" in the name and type "Vegetal"
+         
             Assert.Equal(2, bonos.Count);
             Assert.All(bonos, b =>
             {
@@ -190,7 +189,7 @@ namespace AppForSEII2526.UT.ComprarBonoControllerTest
             var result = await controller.GetBonoParaCompra("Inexistente", null);
 
             //Assert
-            //we check that the response type is NotFound
+         
             var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
             Assert.Equal("No hay bonos que cumplan los requisitos", notFoundResult.Value);
 
@@ -211,17 +210,16 @@ namespace AppForSEII2526.UT.ComprarBonoControllerTest
             var result = await controller.GetBonoParaCompra(_bono1Nombre, null);
 
             //Assert
-            //we check that the response type is OK and obtain the list returned
+          
             var okResult = Assert.IsType<OkObjectResult>(result);
             var bonos = Assert.IsAssignableFrom<IList<ComprarBonosDTO>>(okResult.Value);
 
-            //we verify that the DTO has the correct data
             Assert.Single(bonos);
             var bonoDTO = bonos[0];
             Assert.Equal(1, bonoDTO.BonoID);
             Assert.Equal(_bono1Nombre, bonoDTO.Nombre);
             Assert.Equal(25.0, bonoDTO.PrecioCompra);
-            Assert.Equal(1, bonoDTO.Cantidad); // Default value
+            Assert.Equal(1, bonoDTO.Cantidad); 
             Assert.Equal(_tipo1Nombre, bonoDTO.Tipo);
 
         }
@@ -332,7 +330,7 @@ namespace AppForSEII2526.UT.ComprarBonoControllerTest
             var result = await controller.CrearCompraBono(compraDTO);
 
             //Assert
-            //we check that the response type is BadRequest and obtain the error returned
+        
             var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
             var problemDetails = Assert.IsType<ValidationProblemDetails>(badRequestResult.Value);
 
@@ -374,7 +372,7 @@ namespace AppForSEII2526.UT.ComprarBonoControllerTest
             var result = await controller.CrearCompraBono(compraDTO);
 
             //Assert
-            //we check that the response type is BadRequest and obtain the error returned
+      
             var createdResult = Assert.IsType<CreatedAtActionResult>(result);
             var actualCompraDetalle = Assert.IsType<ComprarBonoBocadilloDetalle>(createdResult.Value);
 
@@ -420,7 +418,7 @@ namespace AppForSEII2526.UT.ComprarBonoControllerTest
             var result = await controller.CrearCompraBono(compraDTO);
 
             //Assert
-            //we check that the response type is BadRequest and obtain the error returned
+            
             var createdResult = Assert.IsType<CreatedAtActionResult>(result);
             var actualCompraDetalle = Assert.IsType<ComprarBonoBocadilloDetalle>(createdResult.Value);
 
