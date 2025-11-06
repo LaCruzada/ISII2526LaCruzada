@@ -31,7 +31,7 @@ namespace AppForSEII2526.API.Models
         public TipoPan TipoPan { get; set; }
         public Bocadillo()
         {
-            ResenyaBocadillos = new List<ResenyaBocadillo>();
+
         }
 
         public Bocadillo(int id, string nombre, decimal pVP, List<CompraBocadillo> comprasDelBocadillo, string? resenyaBocadillo, int stock, int panId, EnumTamaño tamano, List<ResenyaBocadillo> resenyaBocadillos, TipoPan tipoPan)

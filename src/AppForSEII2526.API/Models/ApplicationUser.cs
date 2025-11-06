@@ -12,6 +12,15 @@ public class ApplicationUser : IdentityUser {
     {
     }
 
+    public ApplicationUser(string id, string nombre, string apellido1, string email, string address)
+    {
+        Id = id;
+        UserName = email;
+        Email = email;
+        Nombre = nombre;
+        Apellido1 = apellido1;
+    }
+
     [Required]
     [StringLength(50)]
     public string Nombre { get; set; }

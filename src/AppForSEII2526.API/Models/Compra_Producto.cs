@@ -7,50 +7,29 @@ namespace AppForSEII2526.API.Models
 {
     public class Compra_Producto
     {
-        public Compra_Producto()
-        {
-
-            ProductoCompras = new List<ProductoCompra>();
-            Nombre = string.Empty;
-            Apellido_1 = string.Empty;
-            Apellido_2 = string.Empty;
-            DireccionEnvio = string.Empty;
-            Metodo_Pago = string.Empty;
-        }
-
-        public Compra_Producto(int compraId, string nombre, string apellido1, string apellido2,
-                     string direccionEnvio, DateTime fechaCompra, string metodoPago, decimal precioFinal)
+        public Compra_Producto(int compraId, List<ApplicationUser> usuario, string direccionEnvio, DateTime fechaCompra, string metodo_Pago, decimal precioFinal, List<ProductoCompra> productoCompras)
         {
             CompraId = compraId;
-            Nombre = nombre;
-            Apellido_1 = apellido1;
-            Apellido_2 = apellido2;
+            this.usuario = usuario;
             DireccionEnvio = direccionEnvio;
             FechaCompra = fechaCompra;
-            Metodo_Pago = metodoPago;
+            Metodo_Pago = metodo_Pago;
             PrecioFinal = precioFinal;
-            ProductoCompras = new List<ProductoCompra>();
+            ProductoCompras = productoCompras;
+        }
+
+        public Compra_Producto()
+        {
         }
 
         [Key]
         public int CompraId { get; set; }
 
-        [Required]
-        [StringLength(50)]
-        public string Nombre { get; set; }
-
-        [Required]
-        [StringLength(50)]
-        public string Apellido_1 { get; set; }
-
-        [StringLength(50)]
-        public string Apellido_2 { get; set; }
-
+        public List<ApplicationUser> usuario { get; set; } = new List<ApplicationUser>();
         [Required]
         [StringLength(200)]
         public string DireccionEnvio { get; set; }
 
-        [Required]
         [DataType(DataType.DateTime)]
         [DisplayName("Fecha de Compra")]
         public DateTime FechaCompra { get; set; }
@@ -59,7 +38,6 @@ namespace AppForSEII2526.API.Models
         [StringLength(50)]
         public string Metodo_Pago { get; set; }
 
-        [Required]
         [Column(TypeName = "decimal(18,2)")]
         public decimal PrecioFinal { get; set; }
 
@@ -68,20 +46,19 @@ namespace AppForSEII2526.API.Models
 
         public override bool Equals(object? obj)
         {
-            return obj is Compra_Producto compra &&
-                   CompraId == compra.CompraId &&
-                   Nombre == compra.Nombre &&
-                   Apellido_1 == compra.Apellido_1 &&
-                   Apellido_2 == compra.Apellido_2 &&
-                   DireccionEnvio == compra.DireccionEnvio &&
-                   FechaCompra == compra.FechaCompra &&
-                   Metodo_Pago == compra.Metodo_Pago &&
-                   PrecioFinal == compra.PrecioFinal;
+            return obj is Compra_Producto producto &&
+                   CompraId == producto.CompraId &&
+                   EqualityComparer<List<ApplicationUser>>.Default.Equals(usuario, producto.usuario) &&
+                   DireccionEnvio == producto.DireccionEnvio &&
+                   FechaCompra == producto.FechaCompra &&
+                   Metodo_Pago == producto.Metodo_Pago &&
+                   PrecioFinal == producto.PrecioFinal &&
+                   EqualityComparer<List<ProductoCompra>>.Default.Equals(ProductoCompras, producto.ProductoCompras);
         }
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(CompraId, Nombre, Apellido_1, Apellido_2, DireccionEnvio, FechaCompra, Metodo_Pago, PrecioFinal);
+            return HashCode.Combine(CompraId, usuario, DireccionEnvio, FechaCompra, Metodo_Pago, PrecioFinal, ProductoCompras);
         }
     }
 }
