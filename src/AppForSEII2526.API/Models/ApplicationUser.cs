@@ -36,5 +36,6 @@ public class ApplicationUser : IdentityUser
 
  
     public List<CompraBono> Compras { get; set; }
-    public string DireccionEnvio { get; set; } // <-- Añadir esta propiedad
+
+    public string? DireccionEnvio { get; set; } 
 }
