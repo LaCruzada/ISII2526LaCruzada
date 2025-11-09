@@ -65,7 +65,7 @@ namespace AppForSEII2526.API.Controllers
                         Id = p.ProductoId,  // O p.Productold según tu modelo exacto
                         Nombre = p.Nombre,
                         Precio = p.PVP,
-                        Tipo = p.TipoProducto.ToString(),
+                        Tipo = p.TipoProducto.Nombre,
                         Stock = p.Stock
                     })
                     .ToListAsync();

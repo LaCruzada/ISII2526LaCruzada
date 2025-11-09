@@ -28,6 +28,7 @@ namespace AppForSEII2526.API.Controllers
                     .Include(c => c.usuario) // Navegación correcta a la lista de usuarios
                     .Include(c => c.ProductoCompras) // Tabla intermedia
                         .ThenInclude(pc => pc.Producto)
+                            .ThenInclude(p => p.TipoProducto) // Incluir TipoProducto para obtener el nombre
                     .FirstOrDefaultAsync(c => c.CompraId == id);
 
                 if (compra == null)
@@ -50,7 +51,7 @@ namespace AppForSEII2526.API.Controllers
                     {
                         ProductoId = pc.ProductoId,
                         Nombre = pc.Producto.Nombre,
-                        Tipo = pc.Producto.TipoProducto.ToString(),
+                        Tipo = pc.Producto.TipoProducto.Nombre, // Acceder al nombre del tipo
                         PrecioUnitario = pc.PVP, // PVP guardado en la tabla intermedia
                         Cantidad = pc.Cantidad
                     }).ToList()
@@ -98,12 +99,14 @@ namespace AppForSEII2526.API.Controllers
                     {
                         Nombre = createDto.NombreCliente,
                         Apellido1 = createDto.Apellido1Cliente,
-                        Apellido2 = createDto.Apellido2Cliente,
+                        Apellido2 = createDto.Apellido2Cliente ?? string.Empty,
                         Email = createDto.EmailCliente,
                         UserName = createDto.EmailCliente,
-                        EmailConfirmed = true
+                        EmailConfirmed = true,
+                        DireccionEnvio = createDto.DireccionEnvio // Agregar la dirección al usuario
                     };
                     _context.Users.Add(cliente);
+                    await _context.SaveChangesAsync(); // Guardar el usuario primero para obtener su ID
                 }
 
                 // Procesar productos y verificar stock (Flujo alternativo 0)
@@ -148,15 +151,23 @@ namespace AppForSEII2526.API.Controllers
                 var compra = new Compra_Producto
                 {
                     usuario = new List<ApplicationUser> { cliente },
-                    DireccionEnvio = createDto.DireccionEnvio, // Guardar dirección en la compra
+                    DireccionEnvio = createDto.DireccionEnvio,
                     FechaCompra = DateTime.Now,
-                    Metodo_Pago = createDto.MetodoPago, // Directamente string
-                    PrecioFinal = precioTotal,
-                    ProductoCompras = productosComprados
+                    Metodo_Pago = createDto.MetodoPago,
+                    PrecioFinal = precioTotal
                 };
 
                 _context.Compra_Producto.Add(compra);
-                await _context.SaveChangesAsync();
+                await _context.SaveChangesAsync(); // Guardar primero la compra para obtener el ID
+
+                // Ahora asignar el CompraId a los productos comprados
+                foreach (var pc in productosComprados)
+                {
+                    pc.CompraId = compra.CompraId;
+                }
+
+                _context.ProductoCompra.AddRange(productosComprados);
+                await _context.SaveChangesAsync(); // Guardar los productos comprados
 
                 return CreatedAtAction(nameof(GetCompra), new { id = compra.CompraId }, new
                 {
@@ -167,55 +178,7 @@ namespace AppForSEII2526.API.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = "Error al crear la compra: " + ex.Message });
-            }
-        }
-
-        // GET: api/CompraMerchandising/Select
-        [HttpGet("Select")]
-        public async Task<ActionResult<List<ProductoSelectDTO>>> GetProductosDisponibles(
-            [FromQuery] string? tipo,
-            [FromQuery] decimal? minPrecio,
-            [FromQuery] decimal? maxPrecio)
-        {
-            try
-            {
-                var query = _context.Producto
-                    .Where(p => p.Stock > 0)
-                    .AsQueryable();
-
-                // Filtro por tipo (si tu TipoProducto es enum)
-                if (!string.IsNullOrEmpty(tipo))
-                {
-                    // Cambiar a comparar con el nombre del tipo de producto
-                    query = query.Where(p => p.TipoProducto.Nombre.ToLower() == tipo.ToLower());
-                }
-
-                if (minPrecio.HasValue)
-                    query = query.Where(p => p.PVP >= minPrecio.Value);
-
-                if (maxPrecio.HasValue)
-                    query = query.Where(p => p.PVP <= maxPrecio.Value);
-
-                var productos = await query
-                    .Select(p => new ProductoSelectDTO
-                    {
-                        Id = p.ProductoId, // Cambiado de ProductoId a Id
-                        Nombre = p.Nombre,
-                        Precio = p.PVP,
-                        Tipo = p.TipoProducto.ToString(),
-                        Stock = p.Stock
-                    })
-                    .ToListAsync();
-
-                if (!productos.Any())
-                    return NotFound(new { message = "No hay merchandising disponible que cumplan los criterios." });
-
-                return Ok(productos);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { error = "Error al obtener productos: " + ex.Message });
+                return StatusCode(500, new { error = "Error al crear la compra: " + ex.Message + " | Inner: " + ex.InnerException?.Message });
             }
         }
     }
