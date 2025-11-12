@@ -28,7 +28,6 @@ namespace AppForSEII2526.UT.MerchandisingController_test
 
         public CompraMerchandisingControllerPostTEST()
         {
-            // Seed de Tipos de Producto
             var tipoCamiseta = new TipoProducto { TipoProductoId = 1, Nombre = "Camiseta" };
             var tipoTaza = new TipoProducto { TipoProductoId = 2, Nombre = "Taza" };
             var tipoPoster = new TipoProducto { TipoProductoId = 3, Nombre = "Poster" };
@@ -36,7 +35,6 @@ namespace AppForSEII2526.UT.MerchandisingController_test
 
             _context.TipoProducto.AddRange(tipoCamiseta, tipoTaza, tipoPoster, tipoGorra);
 
-            // Seed de Productos con stock variado
             _context.Producto.AddRange(
                 new Producto
                 {
@@ -93,7 +91,6 @@ namespace AppForSEII2526.UT.MerchandisingController_test
 
         public static IEnumerable<object[]> TestCasesFor_CrearCompra_CosasObligatorias()
         {
-            // Producto no existe (Flujo alternativo 0)
             var dtoProductoNoExiste = new ComprarMerchandisingCreateDTO
             {
                 EmailCliente = "test@test.com",
@@ -108,7 +105,6 @@ namespace AppForSEII2526.UT.MerchandisingController_test
                 }
             };
 
-            // Stock insuficiente (Flujo alternativo 0)
             var dtoSinStock = new ComprarMerchandisingCreateDTO
             {
                 EmailCliente = "test@test.com",
@@ -119,11 +115,10 @@ namespace AppForSEII2526.UT.MerchandisingController_test
                 MetodoPago = "PayPal",
                 Productos = new List<ProductoCantidadDTO>
                 {
-                    new ProductoCantidadDTO { ProductoId = PRODUCTO_ID_POCO_STOCK, Cantidad = 5 } // Stock es 2
+                    new ProductoCantidadDTO { ProductoId = PRODUCTO_ID_POCO_STOCK, Cantidad = 5 }
                 }
             };
 
-            // Carrito vacío (Flujo Alternativo 2)
             var dtoCarritoVacio = new ComprarMerchandisingCreateDTO
             {
                 EmailCliente = "test@test.com",
@@ -132,13 +127,12 @@ namespace AppForSEII2526.UT.MerchandisingController_test
                 Apellido2Cliente = "T",
                 DireccionEnvio = "Dirección Test",
                 MetodoPago = "PayPal",
-                Productos = new List<ProductoCantidadDTO>() // Vacío
+                Productos = new List<ProductoCantidadDTO>()
             };
 
-            // Campos obligatorios vacíos (Flujo Alternativo 4)
             var dtoSinEmail = new ComprarMerchandisingCreateDTO
             {
-                EmailCliente = "", // Vacío
+                EmailCliente = "",
                 NombreCliente = "Test",
                 Apellido1Cliente = "Test",
                 Apellido2Cliente = "T",
@@ -166,17 +160,13 @@ namespace AppForSEII2526.UT.MerchandisingController_test
             ComprarMerchandisingCreateDTO dtoConError,
             string errorEsperado)
         {
-            // Arrange
             var controller = new CompraMerchandisingController(_context);
 
-            // Act
             var actionResult = await controller.CrearCompra(dtoConError);
 
-            // Assert
             var badRequestResult = Assert.IsType<BadRequestObjectResult>(actionResult);
             Assert.NotNull(badRequestResult.Value);
 
-            // Verificar mensaje de error
             var messageProp = badRequestResult.Value.GetType().GetProperty("message");
             var errorsProp = badRequestResult.Value.GetType().GetProperty("errors");
 
@@ -197,7 +187,6 @@ namespace AppForSEII2526.UT.MerchandisingController_test
         [Trait("LevelTesting", "Unit Testing")]
         public async Task CrearCompra_TodoBien_Success_test()
         {
-            // Arrange
             var controller = new CompraMerchandisingController(_context);
 
             var emailNuevo = "cliente.nuevo@test.com";
@@ -206,7 +195,6 @@ namespace AppForSEII2526.UT.MerchandisingController_test
             var stockEsperado = PRODUCTO_STOCK_INICIAL - cantidadPedida;
             var direccionEnvio = "Calle Test 123, Ciudad";
 
-            // Act - Crear un cliente nuevo con carrito válido
             Assert.Equal(0, _context.Users.Count());
 
             var dtoBueno = new ComprarMerchandisingCreateDTO
@@ -225,11 +213,9 @@ namespace AppForSEII2526.UT.MerchandisingController_test
 
             var actionResult = await controller.CrearCompra(dtoBueno);
 
-            // Assert
             var createdResult = Assert.IsType<CreatedAtActionResult>(actionResult);
             Assert.NotNull(createdResult.Value);
             
-            // Usar reflexión en lugar de dynamic
             var valueType = createdResult.Value.GetType();
             var messageProp = valueType.GetProperty("message");
             Assert.NotNull(messageProp);
@@ -237,16 +223,14 @@ namespace AppForSEII2526.UT.MerchandisingController_test
             var message = messageProp.GetValue(createdResult.Value)?.ToString();
             Assert.Equal("Compra realizada correctamente", message);
 
-            // Verificar usuario creado
             Assert.Equal(1, _context.Users.Count());
             var usuarioDb = await _context.Users.FirstOrDefaultAsync();
             Assert.NotNull(usuarioDb);
             Assert.Equal(emailNuevo, usuarioDb.Email);
             Assert.Equal("Carlos", usuarioDb.Nombre);
             Assert.Equal("García", usuarioDb.Apellido1);
-            Assert.Equal("López", usuarioDb.Apellido2); // Verificar que se guarda el segundo apellido
+            Assert.Equal("López", usuarioDb.Apellido2);
 
-            // Verificar compra creada
             Assert.Equal(1, _context.Compra_Producto.Count());
             var compraDb = await _context.Compra_Producto
                 .Include(c => c.usuario)
@@ -261,7 +245,6 @@ namespace AppForSEII2526.UT.MerchandisingController_test
             Assert.Equal(1, compraDb.usuario.Count);
             Assert.Equal(emailNuevo, compraDb.usuario.First().Email);
 
-            // Verificar relación en tabla intermedia (ProductoCompra)
             Assert.Equal(1, _context.ProductoCompra.Count());
             var itemDb = await _context.ProductoCompra
                 .Include(pc => pc.Producto)
@@ -271,9 +254,8 @@ namespace AppForSEII2526.UT.MerchandisingController_test
             Assert.Equal(compraDb.CompraId, itemDb.CompraId);
             Assert.Equal(PRODUCTO_ID_VALIDO, itemDb.ProductoId);
             Assert.Equal(cantidadPedida, itemDb.Cantidad);
-            Assert.Equal(PRODUCTO_PVP_VALIDO, itemDb.PVP); // Verificar que se guarda el PVP en la tabla intermedia
+            Assert.Equal(PRODUCTO_PVP_VALIDO, itemDb.PVP);
 
-            // Verificar stock actualizado (Flujo alternativo 0)
             var productoDb = await _context.Producto.FindAsync(PRODUCTO_ID_VALIDO);
             Assert.Equal(stockEsperado, productoDb.Stock);
         }
@@ -282,10 +264,8 @@ namespace AppForSEII2526.UT.MerchandisingController_test
         [Trait("LevelTesting", "Unit Testing")]
         public async Task CrearCompra_ClienteExistente_NoCreaNuevoUsuario()
         {
-            // Arrange
             var controller = new CompraMerchandisingController(_context);
 
-            // Crear usuario existente primero
             var emailExistente = "cliente.existente@test.com";
             var usuarioExistente = new ApplicationUser
             {
@@ -303,7 +283,7 @@ namespace AppForSEII2526.UT.MerchandisingController_test
             var dtoConClienteExistente = new ComprarMerchandisingCreateDTO
             {
                 EmailCliente = emailExistente,
-                NombreCliente = "OtroNombre", // Este no debe actualizarse
+                NombreCliente = "OtroNombre",
                 Apellido1Cliente = "OtroApellido",
                 Apellido2Cliente = "OtroApellido2",
                 DireccionEnvio = "Nueva Dirección 456",
@@ -314,21 +294,17 @@ namespace AppForSEII2526.UT.MerchandisingController_test
                 }
             };
 
-            // Act
             var actionResult = await controller.CrearCompra(dtoConClienteExistente);
 
-            // Assert
             Assert.IsType<CreatedAtActionResult>(actionResult);
 
-            // Verificar que NO se creó un nuevo usuario
             Assert.Equal(1, _context.Users.Count());
             var usuarioDb = await _context.Users.FirstOrDefaultAsync();
             Assert.Equal(emailExistente, usuarioDb.Email);
-            Assert.Equal("Ana", usuarioDb.Nombre); // Nombre original preservado
+            Assert.Equal("Ana", usuarioDb.Nombre);
             Assert.Equal("Martínez", usuarioDb.Apellido1);
             Assert.Equal("Ruiz", usuarioDb.Apellido2);
 
-            // Verificar que se creó la compra con los nuevos datos
             Assert.Equal(1, _context.Compra_Producto.Count());
             var compraDb = await _context.Compra_Producto.FirstOrDefaultAsync();
             Assert.Equal("Nueva Dirección 456", compraDb.DireccionEnvio);

@@ -20,11 +20,9 @@ namespace AppForSEII2526.UT.MerchandisingController_test
 
         public CompraMerchandisingControllerGetDetailsTEST()
         {
-            // Seed TipoProducto
             _testTipoProducto = new TipoProducto { TipoProductoId = 1, Nombre = "Camiseta" };
             _context.TipoProducto.Add(_testTipoProducto);
 
-            // Seed Producto
             _testProducto = new Producto
             {
                 ProductoId = 1,
@@ -35,7 +33,6 @@ namespace AppForSEII2526.UT.MerchandisingController_test
             };
             _context.Producto.Add(_testProducto);
 
-            // Seed ApplicationUser
             _testUser = new ApplicationUser
             {
                 Id = "user-test-id-123",
@@ -48,7 +45,6 @@ namespace AppForSEII2526.UT.MerchandisingController_test
             };
             _context.Users.Add(_testUser);
 
-            // Seed Compra_Producto
             _testCompra = new Compra_Producto
             {
                 CompraId = 1,
@@ -60,7 +56,6 @@ namespace AppForSEII2526.UT.MerchandisingController_test
             };
             _context.Compra_Producto.Add(_testCompra);
 
-            // Seed ProductoCompra (tabla intermedia)
             var productoCompra = new ProductoCompra(
                 compraId: _testCompra.CompraId,
                 productoId: _testProducto.ProductoId,
@@ -76,7 +71,6 @@ namespace AppForSEII2526.UT.MerchandisingController_test
         [Trait("LevelTesting", "Unit Testing")]
         public async Task GetCompra_Muestra_Success_test()
         {
-            // Arrange
             var controller = new CompraMerchandisingController(_context);
             var expectedId = 1;
             var expectedName = $"{_testUser.Nombre} {_testUser.Apellido1} {_testUser.Apellido2}".Trim();
@@ -87,10 +81,8 @@ namespace AppForSEII2526.UT.MerchandisingController_test
             var expectedCantidad = 3;
             var expectedPrecioUnitario = 15.00m;
 
-            // Act
             var actionResult = await controller.GetCompra(expectedId);
 
-            // Assert
             var okResult = Assert.IsType<OkObjectResult>(actionResult.Result);
             var dto = Assert.IsType<CompraMerchandisingDetailsDTO>(okResult.Value);
 
@@ -113,18 +105,14 @@ namespace AppForSEII2526.UT.MerchandisingController_test
         [Trait("LevelTesting", "Unit Testing")]
         public async Task GetCompra_NoMuestre_DevuelveNotFound()
         {
-            // Arrange
             var controller = new CompraMerchandisingController(_context);
             var nonExistentId = 999;
 
-            // Act
             var actionResult = await controller.GetCompra(nonExistentId);
 
-            // Assert
             var notFoundResult = Assert.IsType<NotFoundObjectResult>(actionResult.Result);
             Assert.NotNull(notFoundResult.Value);
 
-            // Usar reflexión en lugar de dynamic
             var valueType = notFoundResult.Value.GetType();
             var messageProp = valueType.GetProperty("message");
             Assert.NotNull(messageProp);

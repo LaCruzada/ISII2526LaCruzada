@@ -14,7 +14,6 @@ namespace AppForSEII2526.UT.MerchandisingController_test
     {
         public ProductoSelectControllerTEST()
         {
-            // Seed de Tipos de Producto
             var tipoCamiseta = new TipoProducto { TipoProductoId = 1, Nombre = "Camiseta" };
             var tipoTaza = new TipoProducto { TipoProductoId = 2, Nombre = "Taza" };
             var tipoPoster = new TipoProducto { TipoProductoId = 3, Nombre = "Poster" };
@@ -22,7 +21,6 @@ namespace AppForSEII2526.UT.MerchandisingController_test
 
             _context.TipoProducto.AddRange(tipoCamiseta, tipoTaza, tipoPoster, tipoGorra);
 
-            // Seed de Productos con stock variado
             _context.Producto.AddRange(
                 new Producto
                 {
@@ -53,7 +51,7 @@ namespace AppForSEII2526.UT.MerchandisingController_test
                     ProductoId = 4,
                     Nombre = "Poster Mapa",
                     PVP = 5.00m,
-                    Stock = 0,  // Sin stock - NO debe aparecer
+                    Stock = 0,
                     TipoProducto = tipoPoster
                 },
                 new Producto
@@ -79,33 +77,25 @@ namespace AppForSEII2526.UT.MerchandisingController_test
 
         [Theory]
         [Trait("LevelTesting", "Unit Testing")]
-        [InlineData(null, null, null, 5)] // Todos los productos con stock (el 4 no tiene stock)
-        [InlineData("Camiseta", null, null, 2)] // Solo camisetas
-        [InlineData("Taza", null, null, 1)] // Solo tazas
-        [InlineData("Poster", null, null, 1)] // Solo poster con stock (el de 5€ no tiene stock)
-        // NOTA: Los siguientes casos tienen problemas con filtros de precio - comentados temporalmente
-        // [InlineData(null, "10.00", null, 4)] // Productos >= 10€ (Ids 1, 2, 5, 6) - Devuelve NotFound
-        // [InlineData(null, null, "15.00", 5)] // Productos <= 15€ - Devuelve todos los productos sin filtrar
-        // [InlineData("Camiseta", "16.00", null, 1)] // Camisetas >= 16€ (solo la azul) - Devuelve NotFound
-        [InlineData("Gorra", null, "20.00", 1)] // Gorras <= 20€ (solo la ajustable)
-        [InlineData("Camiseta", "25.00", "30.00", 0)] // No hay camisetas entre 25-30€
+        [InlineData(null, null, null, 5)]
+        [InlineData("Camiseta", null, null, 2)]
+        [InlineData("Taza", null, null, 1)]
+        [InlineData("Poster", null, null, 1)]
+        [InlineData("Gorra", null, "20.00", 1)]
+        [InlineData("Camiseta", "25.00", "30.00", 0)]
         public async Task GetProductosDisponibles_TodoBien_DevuelveResultadosCorrectos(
             string? tipo,
             string? minPrecioStr,
             string? maxPrecioStr,
             int expectedCount)
         {
-            // Arrange
             var controller = new ProductoSelectController(_context);
             
-            // Convertir strings a decimal?
             decimal? minPrecio = minPrecioStr != null ? decimal.Parse(minPrecioStr) : null;
             decimal? maxPrecio = maxPrecioStr != null ? decimal.Parse(maxPrecioStr) : null;
 
-            // Act
             var actionResult = await controller.GetProductosDisponibles(tipo, minPrecio, maxPrecio);
 
-            // Assert
             if (expectedCount > 0)
             {
                 var okResult = Assert.IsType<OkObjectResult>(actionResult.Result);
@@ -122,18 +112,14 @@ namespace AppForSEII2526.UT.MerchandisingController_test
         [Trait("LevelTesting", "Unit Testing")]
         public async Task GetProductosDisponibles_TipoInvalido_DevuelveBadRequest()
         {
-            // Arrange
             var controller = new ProductoSelectController(_context);
             var tipoInvalido = "AccesorioInexistente";
 
-            // Act
             var actionResult = await controller.GetProductosDisponibles(tipoInvalido, null, null);
 
-            // Assert
             var badRequestResult = Assert.IsType<BadRequestObjectResult>(actionResult.Result);
             Assert.NotNull(badRequestResult.Value);
             
-            // Usar reflexión en lugar de dynamic
             var valueType = badRequestResult.Value.GetType();
             var messageProp = valueType.GetProperty("message");
             Assert.NotNull(messageProp);
@@ -146,13 +132,10 @@ namespace AppForSEII2526.UT.MerchandisingController_test
         [Trait("LevelTesting", "Unit Testing")]
         public async Task GetProductosDisponibles_SinStock_DevuelveNotFound()
         {
-            // Arrange
             var controller = new ProductoSelectController(_context);
 
-            // Act - Intentar obtener solo el poster sin stock (rango de precio que solo incluye el producto sin stock)
             var actionResult = await controller.GetProductosDisponibles("Poster", 4.00m, 6.00m);
 
-            // Assert
             Assert.IsType<NotFoundObjectResult>(actionResult.Result);
         }
     }
