@@ -27,21 +27,21 @@ namespace AppForSEII2526.API.Controllers
             try
             {
                 var query = _context.Producto
+                    .Include(p => p.TipoProducto)
                     .Where(p => p.Stock > 0)
                     .AsQueryable();
 
-                // Filtro por tipo (si tu TipoProducto es enum)
+                // Filtro por tipo
                 if (!string.IsNullOrEmpty(tipo))
                 {
-                    // Buscar el tipo por nombre en la base de datos
-                    var tipoProductoDb = await _context.TipoProducto
-                        .FirstOrDefaultAsync(t => t.Nombre.ToLower() == tipo.ToLower());
-
-                    if (tipoProductoDb != null)
-                    {
-                        query = query.Where(p => p.TipoProducto.TipoProductoId == tipoProductoDb.TipoProductoId);
-                    }
-                    else
+                    // Filtrar directamente en la consulta
+                    query = query.Where(p => p.TipoProducto.Nombre.ToLower() == tipo.ToLower());
+                    
+                    // Verificar si existe algún producto con ese tipo
+                    var existeTipo = await _context.TipoProducto
+                        .AnyAsync(t => t.Nombre.ToLower() == tipo.ToLower());
+                    
+                    if (!existeTipo)
                     {
                         return BadRequest(new { message = $"El tipo '{tipo}' no es un filtro válido." });
                     }
@@ -62,7 +62,7 @@ namespace AppForSEII2526.API.Controllers
                 var productos = await query
                     .Select(p => new ProductoSelectDTO
                     {
-                        Id = p.ProductoId,  // O p.Productold según tu modelo exacto
+                        Id = p.ProductoId,
                         Nombre = p.Nombre,
                         Precio = p.PVP,
                         Tipo = p.TipoProducto.Nombre,

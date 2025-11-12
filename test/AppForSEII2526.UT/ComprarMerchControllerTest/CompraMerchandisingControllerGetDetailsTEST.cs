@@ -124,8 +124,13 @@ namespace AppForSEII2526.UT.MerchandisingController_test
             var notFoundResult = Assert.IsType<NotFoundObjectResult>(actionResult.Result);
             Assert.NotNull(notFoundResult.Value);
 
-            dynamic value = notFoundResult.Value;
-            Assert.Contains("Compra no encontrada", value.message.ToString());
+            // Usar reflexión en lugar de dynamic
+            var valueType = notFoundResult.Value.GetType();
+            var messageProp = valueType.GetProperty("message");
+            Assert.NotNull(messageProp);
+            
+            var message = messageProp.GetValue(notFoundResult.Value)?.ToString();
+            Assert.Contains("Compra no encontrada", message);
         }
     }
 }

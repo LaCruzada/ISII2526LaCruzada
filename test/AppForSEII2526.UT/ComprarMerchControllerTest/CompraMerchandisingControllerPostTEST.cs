@@ -228,8 +228,14 @@ namespace AppForSEII2526.UT.MerchandisingController_test
             // Assert
             var createdResult = Assert.IsType<CreatedAtActionResult>(actionResult);
             Assert.NotNull(createdResult.Value);
-            dynamic value = createdResult.Value;
-            Assert.Equal("Compra realizada correctamente", value.message.ToString());
+            
+            // Usar reflexión en lugar de dynamic
+            var valueType = createdResult.Value.GetType();
+            var messageProp = valueType.GetProperty("message");
+            Assert.NotNull(messageProp);
+            
+            var message = messageProp.GetValue(createdResult.Value)?.ToString();
+            Assert.Equal("Compra realizada correctamente", message);
 
             // Verificar usuario creado
             Assert.Equal(1, _context.Users.Count());
