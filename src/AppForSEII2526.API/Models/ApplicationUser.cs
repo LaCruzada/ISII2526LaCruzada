@@ -36,4 +36,6 @@ public class ApplicationUser : IdentityUser
 
  
     public List<CompraBono> Compras { get; set; }
+
+    public string? DireccionEnvio { get; set; } 
 }
