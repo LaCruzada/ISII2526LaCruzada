@@ -48,6 +48,16 @@ namespace AppForSEII2526.API.Models
             TipoPan = tipoPan;
         }
 
+        public Bocadillo(int id, string nombre, decimal pVP, EnumTamaño tamano, int tipoPanId, List<ResenyaBocadillo> resenyaBocadillos)
+        {
+            Id = id;
+            Nombre = nombre;
+            PVP = pVP;
+            Tamano = tamano;
+            TipoPanId = tipoPanId;
+            ResenyaBocadillos = resenyaBocadillos;
+        }
+
         public override bool Equals(object? obj)
         {
             return obj is Bocadillo bocadillo &&
