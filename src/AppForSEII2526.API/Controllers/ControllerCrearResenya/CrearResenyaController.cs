@@ -28,7 +28,6 @@ namespace AppForSEII2526.API.Controllers.ControllerCrearResenya
 
             var resenyaDTO = await _context.Resenyas
                 .Where(resenya => resenya.Id == id)
-                    .Include(resenya => resenya.NombreUsuario)
                     .Include(resenya => resenya.ResenyaBocadillos)
                         .ThenInclude(bocadillo => bocadillo.Bocadillo)
                 .Select(resenya => new ResenyaDetallesDTO(
@@ -39,13 +38,16 @@ namespace AppForSEII2526.API.Controllers.ControllerCrearResenya
                         resenya.FechaPublicacion,
                         resenya.NombreUsuario,
                         resenya.ResenyaBocadillos
-                            .Select(rb => new ResenyaBocadilloDTO
-                            (
+                            .Select(rb => new ResenyaBocadilloDTO(
+                                rb.BocadilloId,
                                 rb.Bocadillo.Nombre,
                                 rb.Bocadillo.PVP,
                                 rb.Bocadillo.Tamano,
                                 rb.Puntuacion
-                            )).ToList<ResenyaBocadilloDTO>()))
+                            ))
+                            .ToList()
+                    ))
+
                 .FirstOrDefaultAsync();
             if (resenyaDTO == null)
             {
@@ -70,10 +72,15 @@ namespace AppForSEII2526.API.Controllers.ControllerCrearResenya
             }
 
             if (string.IsNullOrWhiteSpace(resenyaforcreacion.Titulo) ||
-                string.IsNullOrWhiteSpace(resenyaforcreacion.Descripcion) ||
-                resenyaforcreacion.ValoracionGeneral == null)
+                string.IsNullOrWhiteSpace(resenyaforcreacion.Descripcion))
             {
-                ModelState.AddModelError("CamposObligatorios", "Error! Debes proporcionar título, descripción y valoración general.");
+                ModelState.AddModelError("CamposObligatorios", "Error! Debes proporcionar título y descripción.");
+                return BadRequest(new ValidationProblemDetails(ModelState));
+            }
+
+            if (!Enum.IsDefined(typeof(EnumValoracion_General), resenyaforcreacion.ValoracionGeneral))
+            {
+                ModelState.AddModelError("ValoracionGeneral", "La valoración general no es válida.");
                 return BadRequest(new ValidationProblemDetails(ModelState));
             }
 
@@ -82,13 +89,19 @@ namespace AppForSEII2526.API.Controllers.ControllerCrearResenya
             {
                 usuarioEnBd = await _context.Users
                     .FirstOrDefaultAsync(u => u.UserName == resenyaforcreacion.NombreUsuario);
+
                 if (usuarioEnBd == null)
                 {
                     usuarioEnBd = new ApplicationUser
                     {
                         UserName = resenyaforcreacion.NombreUsuario,
+                        Email = resenyaforcreacion.NombreUsuario,
+                        Nombre = "NombrePorDefecto",
+                        Apellido1 = "Apellido1PorDefecto",
+                        Apellido2 = "" // SQLite NO acepta null
                     };
                     _context.Users.Add(usuarioEnBd);
+                    await _context.SaveChangesAsync();
                 }
             }
 
@@ -110,8 +123,11 @@ namespace AppForSEII2526.API.Controllers.ControllerCrearResenya
                 else
                 {
                     var resenyaBocadillo = new ResenyaBocadillo(
+                        item.BocadilloId,
+                        resenya.Id,
+                        item.Puntuacion,
                         bocadillo,
-                        item.Puntuacion
+                        resenya
                     );
                     resenya.ResenyaBocadillos.Add(resenyaBocadillo);
                 }
@@ -138,6 +154,7 @@ namespace AppForSEII2526.API.Controllers.ControllerCrearResenya
                 resenyaDetalles.NombreUsuario,
                 resenyaDetalles.ResenyaBocadillos
                     .Select(rb => new ResenyaBocadilloDTO(
+                        rb.BocadilloId,
                         rb.Bocadillo.Nombre,
                         rb.Bocadillo.PVP,
                         rb.Bocadillo.Tamano,
@@ -147,5 +164,6 @@ namespace AppForSEII2526.API.Controllers.ControllerCrearResenya
 
             return CreatedAtAction(nameof(GetResenya), new { id = resenyaDto.Id }, resenyaDto);
         }
+
     }
 }
