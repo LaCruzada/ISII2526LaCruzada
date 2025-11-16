@@ -28,6 +28,12 @@ namespace AppForSEII2526.API.Models
             Resenya = resenya;
         }
 
+        public ResenyaBocadillo(Bocadillo bocadillo, int puntuacion)
+        {
+            Bocadillo = bocadillo;
+            Puntuacion = puntuacion;
+        }
+
         public override bool Equals(object? obj)
         {
             return obj is ResenyaBocadillo bocadillo &&

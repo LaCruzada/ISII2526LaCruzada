@@ -1,9 +1,19 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace AppForSEII2526.API.ResenyaDTOs
+namespace AppForSEII2526.API.DTOs.DTOsCrearResenya.ResenyaDTOs
 {
     public class ResenyaBocadilloDTO
     {
+        private string nombre;
+        private decimal pVP;
+        private EnumTamaño tamano;
+
+        public int BocadilloId { get; set; }
+
+        public int ResenyaId { get; set; }
+
+        public int Puntuacion { get; set; }
+
         public ResenyaBocadilloDTO() { }
 
         public ResenyaBocadilloDTO(int bocadilloId, int resenyaId, int puntuacion)
@@ -13,13 +23,13 @@ namespace AppForSEII2526.API.ResenyaDTOs
             Puntuacion = puntuacion;
         }
 
-        [Key]
-        public int BocadilloId { get; set; }
-
-        public int ResenyaId { get; set; }
-
-        [Range(1, 5, ErrorMessage = "La puntuación debe estar entre 1 y 5.")]
-        public int Puntuacion { get; set; }
+        public ResenyaBocadilloDTO(string nombre, decimal pVP, EnumTamaño tamano, int puntuacion)
+        {
+            this.nombre = nombre;
+            this.pVP = pVP;
+            this.tamano = tamano;
+            Puntuacion = puntuacion;
+        }
 
         public override bool Equals(object? obj)
         {

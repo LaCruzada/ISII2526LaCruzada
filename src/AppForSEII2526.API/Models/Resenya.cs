@@ -4,6 +4,7 @@ namespace AppForSEII2526.API.Models
 {
     public class Resenya
     {
+
         [Key]
         public int Id { get; set; }
 
@@ -27,6 +28,7 @@ namespace AppForSEII2526.API.Models
 
         public List<ResenyaBocadillo> ResenyaBocadillos { get; set; } = new List<ResenyaBocadillo>();
 
+
         public Resenya()
         {
             ResenyaBocadillos = new List<ResenyaBocadillo>();
@@ -40,6 +42,15 @@ namespace AppForSEII2526.API.Models
             Titulo = titulo;
             Valoracion_General = valoracion_General;
             ResenyaBocadillos = resenyaBocadillo;
+        }
+
+        public Resenya(string titulo, string descripcion, EnumValoracion_General valoracionGeneral, DateTime fechaPublicacion, string nombreUsuario)
+        {
+            Titulo = titulo;
+            Descripcion = descripcion;
+            Valoracion_General = valoracionGeneral;
+            FechaPublicacion = fechaPublicacion;
+            NombreUsuario = nombreUsuario;
         }
 
         public override bool Equals(object? obj)

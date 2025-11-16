@@ -2,39 +2,38 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-namespace AppForSEII2526.API.ResenyaDTOs
+namespace AppForSEII2526.API.DTOs.DTOsCrearResenya.ResenyaDTOs
 {
     public class ResenyaForCreacionDTO
     {
+        public string NombreUsuario { get; set; }
+
+        public string Titulo { get; set; }
+
+        public string Descripcion { get; set; }
+
+        public EnumValoracion_General ValoracionGeneral { get; set; }
+        public DateTime FechaPublicacion { get; set; }
+
+        public List<ResenyaBocadilloDTO> ResenyaBocadillos { get; set; } = new List<ResenyaBocadilloDTO>();
         public ResenyaForCreacionDTO() { }
 
         public ResenyaForCreacionDTO(
-            string? nombreUsuario,
+            string nombreUsuario,
             string titulo,
             string descripcion,
             EnumValoracion_General valoracionGeneral,
-            List<ResenyaBocadilloDTO> resenyaBocadillos)
+            List<ResenyaBocadilloDTO> resenyaBocadillos,
+            DateTime fechaPublicacion)
         {
             NombreUsuario = nombreUsuario;
             Titulo = titulo ?? throw new ArgumentNullException(nameof(titulo));
             Descripcion = descripcion ?? throw new ArgumentNullException(nameof(descripcion));
             ValoracionGeneral = valoracionGeneral;
             ResenyaBocadillos = resenyaBocadillos ?? new List<ResenyaBocadilloDTO>();
+            FechaPublicacion = fechaPublicacion;
         }
 
-        [StringLength(20, ErrorMessage = "El nombre no puede ocupar más de 20 caracteres.", MinimumLength = 1)]
-        public string? NombreUsuario { get; set; }
-
-        [Required, StringLength(20, ErrorMessage = "El título no puede ocupar más de 20 caracteres.", MinimumLength = 1)]
-        public string Titulo { get; set; }
-
-        [Required, StringLength(200, ErrorMessage = "La descripción no puede tener más de 200 caracteres.", MinimumLength = 1)]
-        public string Descripcion { get; set; }
-
-        [Required]
-        public EnumValoracion_General ValoracionGeneral { get; set; }
-
-        public List<ResenyaBocadilloDTO> ResenyaBocadillos { get; set; } = new List<ResenyaBocadilloDTO>();
         public override bool Equals(object? obj)
         {
             return obj is ResenyaForCreacionDTO dto &&
@@ -42,11 +41,12 @@ namespace AppForSEII2526.API.ResenyaDTOs
                    Titulo == dto.Titulo &&
                    Descripcion == dto.Descripcion &&
                    ValoracionGeneral == dto.ValoracionGeneral &&
-                   EqualityComparer<List<ResenyaBocadilloDTO>>.Default.Equals(ResenyaBocadillos, dto.ResenyaBocadillos);
+                   EqualityComparer<List<ResenyaBocadilloDTO>>.Default.Equals(ResenyaBocadillos, dto.ResenyaBocadillos) &&
+                   FechaPublicacion == dto.FechaPublicacion;
         }
         public override int GetHashCode()
         {
-            return HashCode.Combine(NombreUsuario, Titulo, Descripcion, ValoracionGeneral, ResenyaBocadillos);
+            return HashCode.Combine(NombreUsuario, Titulo, Descripcion, ValoracionGeneral, ResenyaBocadillos, FechaPublicacion);
         }
     }
 }
