@@ -24,6 +24,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<Bocadillo> Bocadillos { get; set; }
     public DbSet<TipoPan> TipoPanes { get; set; }
     public DbSet<Resenya> Resenyas { get; set; }
+    public DbSet<ResenyaBocadillo> ResenyaBocadillo { get; set; }
     public DbSet<ResenyaBocadillo> BocadilloId { get; set; }
     protected override void OnModelCreating(ModelBuilder builder)
     {
