@@ -59,7 +59,7 @@ namespace AppForSEII2526.UT.CrearResenyaControllerTest
 
             var createDto = new ResenyaForCreacionDTO
             {
-                Titulo = "Mi reseña",
+                Titulo = "Sugerencia para",
                 Descripcion = "Muy bueno",
                 ValoracionGeneral = EnumValoracion_General.Cuatro,
                 NombreUsuario = "usuario@ejemplo.com",
@@ -74,19 +74,19 @@ namespace AppForSEII2526.UT.CrearResenyaControllerTest
             var created = Assert.IsType<CreatedAtActionResult>(result);
             var dto = Assert.IsType<ResenyaDetallesDTO>(created.Value);
 
-            Assert.Equal("Mi reseña", dto.Titulo);
+            Assert.Equal("Sugerencia para", dto.Titulo);
             Assert.Single(dto.ResenyaBocadillos);
             Assert.Equal(1, dto.ResenyaBocadillos[0].BocadilloId);
         }
 
         [Fact]
-        public async Task CrearResenya_SinCamposObligatorios_Error()
+        public async Task CrearResenya_SinDescripción_Error()
         {
             var controller = new CrearResenyaController(_context);
 
             var dto = new ResenyaForCreacionDTO
             {
-                Titulo = "",
+                Titulo = "Sugerencia para",
                 Descripcion = "",
                 ValoracionGeneral = EnumValoracion_General.Una,
                 ResenyaBocadillos = new List<ResenyaBocadilloDTO>
@@ -100,7 +100,7 @@ namespace AppForSEII2526.UT.CrearResenyaControllerTest
             var badRequest = Assert.IsType<BadRequestObjectResult>(result);
             var problem = Assert.IsType<ValidationProblemDetails>(badRequest.Value);
 
-            Assert.True(problem.Errors.ContainsKey("CamposObligatorios"));
+            Assert.True(problem.Errors.ContainsKey("DescripciónObligatoria"));
         }
 
         [Fact]
@@ -110,7 +110,7 @@ namespace AppForSEII2526.UT.CrearResenyaControllerTest
 
             var dto = new ResenyaForCreacionDTO
             {
-                Titulo = "Test",
+                Titulo = "Sugerencia para",
                 Descripcion = "Desc",
                 ValoracionGeneral = EnumValoracion_General.Tres,
                 ResenyaBocadillos = null
@@ -131,7 +131,7 @@ namespace AppForSEII2526.UT.CrearResenyaControllerTest
 
             var dto = new ResenyaForCreacionDTO
             {
-                Titulo = "Nueva",
+                Titulo = "Sugerencia para",
                 Descripcion = "Desc",
                 ValoracionGeneral = EnumValoracion_General.Cinco,
                 NombreUsuario = "nuevo@correo.com",
@@ -156,7 +156,7 @@ namespace AppForSEII2526.UT.CrearResenyaControllerTest
 
             var dto = new ResenyaForCreacionDTO
             {
-                Titulo = "Test",
+                Titulo = "Sugerencia para",
                 Descripcion = "Desc",
                 ValoracionGeneral = EnumValoracion_General.Una,
                 ResenyaBocadillos = new List<ResenyaBocadilloDTO>
@@ -171,6 +171,54 @@ namespace AppForSEII2526.UT.CrearResenyaControllerTest
             var problem = Assert.IsType<ValidationProblemDetails>(badRequest.Value);
 
             Assert.Contains("Bocadillo 999 no encontrado.", problem.Errors["ResenyaBocadillos"].First());
+        }
+
+        [Fact]
+        public async Task CrearResenya_TituloIncorrecto_Error()
+        {
+            var controller = new CrearResenyaController(_context);
+
+            var dto = new ResenyaForCreacionDTO
+            {
+                Titulo = "Modificar el bocadillo",
+                Descripcion = "Mal titulo",
+                ValoracionGeneral = EnumValoracion_General.Una,
+                ResenyaBocadillos = new List<ResenyaBocadilloDTO>
+                {
+                    new ResenyaBocadilloDTO { BocadilloId = 1, Puntuacion = 4 }
+                }
+            };
+
+            var result = await controller.CrearResenya(dto);
+
+            var badRequest = Assert.IsType<BadRequestObjectResult>(result);
+            var problem = Assert.IsType<ValidationProblemDetails>(badRequest.Value);
+
+            Assert.True(problem.Errors.ContainsKey("TituloObligatorio"));
+        }
+
+        [Fact]
+        public async Task CrearResenya_SinTitulo_Error()
+        {
+            var controller = new CrearResenyaController(_context);
+
+            var dto = new ResenyaForCreacionDTO
+            {
+                Titulo = "",
+                Descripcion = "Sin titulo",
+                ValoracionGeneral = EnumValoracion_General.Una,
+                ResenyaBocadillos = new List<ResenyaBocadilloDTO>
+                {
+                    new ResenyaBocadilloDTO { BocadilloId = 1, Puntuacion = 4 }
+                }
+            };
+
+            var result = await controller.CrearResenya(dto);
+
+            var badRequest = Assert.IsType<BadRequestObjectResult>(result);
+            var problem = Assert.IsType<ValidationProblemDetails>(badRequest.Value);
+
+            Assert.True(problem.Errors.ContainsKey("TituloObligatorio"));
         }
     }
 }

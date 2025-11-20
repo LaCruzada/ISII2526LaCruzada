@@ -71,12 +71,18 @@ namespace AppForSEII2526.API.Controllers.ControllerCrearResenya
                 return BadRequest(new ValidationProblemDetails(ModelState));
             }
 
-            if (string.IsNullOrWhiteSpace(resenyaforcreacion.Titulo) ||
-                string.IsNullOrWhiteSpace(resenyaforcreacion.Descripcion))
+            if (string.IsNullOrWhiteSpace(resenyaforcreacion.Descripcion))
             {
-                ModelState.AddModelError("CamposObligatorios", "Error! Debes proporcionar título y descripción.");
+                ModelState.AddModelError("DescripciónObligatoria", "Error! Debes proporcionar descripción.");
                 return BadRequest(new ValidationProblemDetails(ModelState));
             }
+            if (string.IsNullOrWhiteSpace(resenyaforcreacion.Titulo) ||
+                !resenyaforcreacion.Titulo.StartsWith("Sugerencia para"))
+            {
+                ModelState.AddModelError("TituloObligatorio", "Error!, el título de la reseña debe empezar por: 'Sugerencia para'.");
+                return BadRequest(new ValidationProblemDetails(ModelState));
+            }
+
 
             if (!Enum.IsDefined(typeof(EnumValoracion_General), resenyaforcreacion.ValoracionGeneral))
             {
