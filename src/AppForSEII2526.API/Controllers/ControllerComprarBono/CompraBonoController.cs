@@ -38,44 +38,40 @@ namespace AppForSEII2526.API.Controllers.ControllerComprarBono
                 return NotFound();
             }
 
-            var dtoProjection = await _context.CompraBono
-                .Where(cb => cb.CompraBonoId == id)
+            // Cargar la entidad completa con includes y luego mapear en memoria.
+            var compra = await _context.CompraBono
                 .Include(cb => cb.bonosComprados!)
                     .ThenInclude(bc => bc.Bono!)
                         .ThenInclude(b => b.tipoBocadillos)
-                .Select(cb => new
-                {
-                    cb.CompraBonoId,
-                    cb.FechaCompraBono,
-                    cb.PrecioTotalBono,
-                    cb.metodoPago,
-                    Cliente = cb.usuario != null ? cb.usuario.FirstOrDefault() : null,
-                    Bonos = cb.bonosComprados.Select(bc => new BonosCompradosDTO
-                    {
-                        BonoID = bc.Bono.BonoId,
-                        Nombre =bc.Bono.nombre,
-                        PrecioUnitario = (double)bc.PrecioBono,
-                        Cantidad = bc.Cantidad,
-                        Tipo = bc.Bono.tipoBocadillos.nombreTipo 
-                    }).ToList()
-                })
-                .FirstOrDefaultAsync();
+                .Include(cb => cb.usuarios) // cargar usuarios relacionados
+                .FirstOrDefaultAsync(cb => cb.CompraBonoId == id);
 
-            if (dtoProjection == null)
+            if (compra == null)
             {
                 _logger.LogError($"Error: Compra con id {id} no existe");
                 return NotFound();
             }
 
-            var cliente = dtoProjection.Cliente;
+            var cliente = compra.usuarios?.FirstOrDefault();
+
+            var bonosDto = compra.bonosComprados?
+                .Select(bc => new BonosCompradosDTO
+                {
+                    BonoID = bc.Bono != null ? bc.Bono.BonoId : 0,
+                    Nombre = bc.Bono != null ? bc.Bono.nombre : string.Empty,
+                    PrecioUnitario = bc.PrecioBono,
+                    Cantidad = bc.Cantidad,
+                    Tipo = bc.Bono?.tipoBocadillos?.nombreTipo ?? string.Empty
+                })
+                .ToList() ?? new List<BonosCompradosDTO>();
 
             var detalle = new ComprarBonoBocadilloDetalle(
-                dtoProjection.CompraBonoId,
-                dtoProjection.Cliente,
-                dtoProjection.metodoPago,
-                dtoProjection.FechaCompraBono,
-                dtoProjection.PrecioTotalBono,
-                dtoProjection.Bonos
+                compra.CompraBonoId,
+                cliente ?? new ApplicationUser(),
+                compra.metodoPago,
+                compra.FechaCompraBono,
+                compra.PrecioTotalBono,
+                bonosDto
             );
 
             return Ok(detalle);
@@ -135,7 +131,7 @@ namespace AppForSEII2526.API.Controllers.ControllerComprarBono
                 PrecioTotalBono = 0f,
                 metodoPago = crearCompra.pago,
                 bonosComprados = new List<BonosComprados>(),
-                usuario = new List<ApplicationUser> { cliente }
+                usuarios = new List<ApplicationUser> { cliente }
             };
 
             // Procesar items (usar BonosCompra)

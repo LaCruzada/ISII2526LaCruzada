@@ -47,9 +47,6 @@ namespace AppForSEII2526.API.Migrations
                 {
                     CompraId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Nombre = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    Apellido_1 = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    Apellido_2 = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     DireccionEnvio = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
                     FechaCompra = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Metodo_Pago = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
@@ -82,11 +79,11 @@ namespace AppForSEII2526.API.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    descripcion = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    FechaInicio = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    NombreUsuario = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
-                    Titulo = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
-                    Valoracion_General = table.Column<int>(type: "int", nullable: false)
+                    Titulo = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    Descripcion = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    Valoracion_General = table.Column<int>(type: "int", nullable: false),
+                    FechaPublicacion = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    NombreUsuario = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -161,7 +158,9 @@ namespace AppForSEII2526.API.Migrations
                     Nombre = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     Apellido1 = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     Apellido2 = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    DireccionEnvio = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     CompraId = table.Column<int>(type: "int", nullable: true),
+                    Compra_ProductoCompraId = table.Column<int>(type: "int", nullable: true),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
@@ -184,6 +183,11 @@ namespace AppForSEII2526.API.Migrations
                         name: "FK_AspNetUsers_Compra_CompraId",
                         column: x => x.CompraId,
                         principalTable: "Compra",
+                        principalColumn: "CompraId");
+                    table.ForeignKey(
+                        name: "FK_AspNetUsers_Compra_Producto_Compra_ProductoCompraId",
+                        column: x => x.Compra_ProductoCompraId,
+                        principalTable: "Compra_Producto",
                         principalColumn: "CompraId");
                 });
 
@@ -218,10 +222,10 @@ namespace AppForSEII2526.API.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Nombre = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     PVP = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
-                    ResenyaBocadillo = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Stock = table.Column<int>(type: "int", nullable: false),
+                    Tamano = table.Column<int>(type: "int", nullable: false),
                     TipoPanId = table.Column<int>(type: "int", nullable: false),
-                    Tamano = table.Column<int>(type: "int", nullable: false)
+                    ResenyaBocadillo = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Stock = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -261,14 +265,14 @@ namespace AppForSEII2526.API.Migrations
                 columns: table => new
                 {
                     ComprasCompraBonoId = table.Column<int>(type: "int", nullable: false),
-                    usuarioId = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                    usuariosId = table.Column<string>(type: "nvarchar(450)", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ApplicationUserCompraBono", x => new { x.ComprasCompraBonoId, x.usuarioId });
+                    table.PrimaryKey("PK_ApplicationUserCompraBono", x => new { x.ComprasCompraBonoId, x.usuariosId });
                     table.ForeignKey(
-                        name: "FK_ApplicationUserCompraBono_AspNetUsers_usuarioId",
-                        column: x => x.usuarioId,
+                        name: "FK_ApplicationUserCompraBono_AspNetUsers_usuariosId",
+                        column: x => x.usuariosId,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -370,13 +374,13 @@ namespace AppForSEII2526.API.Migrations
                 columns: table => new
                 {
                     BonoId = table.Column<int>(type: "int", nullable: false),
-                    CompraId = table.Column<int>(type: "int", nullable: false),
+                    CompraBonoId = table.Column<int>(type: "int", nullable: false),
                     Cantidad = table.Column<int>(type: "int", nullable: false),
                     PrecioBono = table.Column<float>(type: "real", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_BonosComprados", x => new { x.BonoId, x.CompraId });
+                    table.PrimaryKey("PK_BonosComprados", x => new { x.BonoId, x.CompraBonoId });
                     table.ForeignKey(
                         name: "FK_BonosComprados_BonoBocadillo_BonoId",
                         column: x => x.BonoId,
@@ -384,8 +388,8 @@ namespace AppForSEII2526.API.Migrations
                         principalColumn: "BonoId",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_BonosComprados_CompraBono_CompraId",
-                        column: x => x.CompraId,
+                        name: "FK_BonosComprados_CompraBono_CompraBonoId",
+                        column: x => x.CompraBonoId,
                         principalTable: "CompraBono",
                         principalColumn: "CompraBonoId",
                         onDelete: ReferentialAction.Cascade);
@@ -395,56 +399,46 @@ namespace AppForSEII2526.API.Migrations
                 name: "CompraBocadillo",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    NombreBocadillo = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    TipopanPanId = table.Column<int>(type: "int", nullable: false),
-                    Cantidad = table.Column<int>(type: "int", nullable: false),
-                    Precio = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
-                    BocadilloId = table.Column<int>(type: "int", nullable: true),
-                    CompraId = table.Column<int>(type: "int", nullable: true)
+                    CompraId = table.Column<int>(type: "int", nullable: false),
+                    BocadilloId = table.Column<int>(type: "int", nullable: false),
+                    Cantidad = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_CompraBocadillo", x => x.Id);
+                    table.PrimaryKey("PK_CompraBocadillo", x => new { x.CompraId, x.BocadilloId });
                     table.ForeignKey(
                         name: "FK_CompraBocadillo_Bocadillos_BocadilloId",
-                        column: x => x.BocadilloId,
-                        principalTable: "Bocadillos",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_CompraBocadillo_Compra_CompraId",
-                        column: x => x.CompraId,
-                        principalTable: "Compra",
-                        principalColumn: "CompraId");
-                    table.ForeignKey(
-                        name: "FK_CompraBocadillo_TipoPanes_TipopanPanId",
-                        column: x => x.TipopanPanId,
-                        principalTable: "TipoPanes",
-                        principalColumn: "PanId",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "ResenyaBocadillos",
-                columns: table => new
-                {
-                    BocadilloId = table.Column<int>(type: "int", nullable: false),
-                    ResenyaId = table.Column<int>(type: "int", nullable: false),
-                    ResenyaBocadilloId = table.Column<int>(type: "int", nullable: false),
-                    Puntuacion = table.Column<int>(type: "int", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ResenyaBocadillos", x => new { x.BocadilloId, x.ResenyaId });
-                    table.ForeignKey(
-                        name: "FK_ResenyaBocadillos_Bocadillos_BocadilloId",
                         column: x => x.BocadilloId,
                         principalTable: "Bocadillos",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_ResenyaBocadillos_Resenyas_ResenyaId",
+                        name: "FK_CompraBocadillo_Compra_CompraId",
+                        column: x => x.CompraId,
+                        principalTable: "Compra",
+                        principalColumn: "CompraId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ResenyaBocadillo",
+                columns: table => new
+                {
+                    BocadilloId = table.Column<int>(type: "int", nullable: false),
+                    ResenyaId = table.Column<int>(type: "int", nullable: false),
+                    Puntuacion = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ResenyaBocadillo", x => new { x.BocadilloId, x.ResenyaId });
+                    table.ForeignKey(
+                        name: "FK_ResenyaBocadillo_Bocadillos_BocadilloId",
+                        column: x => x.BocadilloId,
+                        principalTable: "Bocadillos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ResenyaBocadillo_Resenyas_ResenyaId",
                         column: x => x.ResenyaId,
                         principalTable: "Resenyas",
                         principalColumn: "Id",
@@ -478,9 +472,9 @@ namespace AppForSEII2526.API.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_ApplicationUserCompraBono_usuarioId",
+                name: "IX_ApplicationUserCompraBono_usuariosId",
                 table: "ApplicationUserCompraBono",
-                column: "usuarioId");
+                column: "usuariosId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
@@ -515,6 +509,11 @@ namespace AppForSEII2526.API.Migrations
                 column: "NormalizedEmail");
 
             migrationBuilder.CreateIndex(
+                name: "IX_AspNetUsers_Compra_ProductoCompraId",
+                table: "AspNetUsers",
+                column: "Compra_ProductoCompraId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_AspNetUsers_CompraId",
                 table: "AspNetUsers",
                 column: "CompraId");
@@ -537,24 +536,14 @@ namespace AppForSEII2526.API.Migrations
                 column: "tipoBocadillosidTipo");
 
             migrationBuilder.CreateIndex(
-                name: "IX_BonosComprados_CompraId",
+                name: "IX_BonosComprados_CompraBonoId",
                 table: "BonosComprados",
-                column: "CompraId");
+                column: "CompraBonoId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_CompraBocadillo_BocadilloId",
                 table: "CompraBocadillo",
                 column: "BocadilloId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_CompraBocadillo_CompraId",
-                table: "CompraBocadillo",
-                column: "CompraId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_CompraBocadillo_TipopanPanId",
-                table: "CompraBocadillo",
-                column: "TipopanPanId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Producto_TipoProductoId",
@@ -567,8 +556,8 @@ namespace AppForSEII2526.API.Migrations
                 column: "ProductoId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ResenyaBocadillos_ResenyaId",
-                table: "ResenyaBocadillos",
+                name: "IX_ResenyaBocadillo_ResenyaId",
+                table: "ResenyaBocadillo",
                 column: "ResenyaId");
         }
 
@@ -603,7 +592,7 @@ namespace AppForSEII2526.API.Migrations
                 name: "ProductoCompra");
 
             migrationBuilder.DropTable(
-                name: "ResenyaBocadillos");
+                name: "ResenyaBocadillo");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
@@ -618,9 +607,6 @@ namespace AppForSEII2526.API.Migrations
                 name: "CompraBono");
 
             migrationBuilder.DropTable(
-                name: "Compra_Producto");
-
-            migrationBuilder.DropTable(
                 name: "Producto");
 
             migrationBuilder.DropTable(
@@ -631,6 +617,9 @@ namespace AppForSEII2526.API.Migrations
 
             migrationBuilder.DropTable(
                 name: "Compra");
+
+            migrationBuilder.DropTable(
+                name: "Compra_Producto");
 
             migrationBuilder.DropTable(
                 name: "TipoBocadillos");

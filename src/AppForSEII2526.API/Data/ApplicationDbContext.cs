@@ -31,7 +31,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         base.OnModelCreating(builder);
 
         builder.Entity<ProductoCompra>().HasKey(pc => new { pc.CompraId, pc.ProductoId });
-        builder.Entity<BonosComprados>().HasKey(pi => new { pi.BonoId, pi.CompraId });
+        builder.Entity<BonosComprados>().HasKey(pi => new { pi.BonoId, pi.CompraBonoId });
         builder.Entity<ResenyaBocadillo>().HasKey(pc => new { pc.BocadilloId, pc.ResenyaId });
         builder.Entity<CompraBocadillo>().HasKey(pc => new { pc.CompraId, pc.BocadilloId });
     }

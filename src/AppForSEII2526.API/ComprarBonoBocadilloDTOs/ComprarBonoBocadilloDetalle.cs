@@ -18,6 +18,7 @@ namespace AppForSEII2526.API.ComprarBonoBocadilloDTOs
            
         }
         [Key]
+        [JsonIgnore]
         public int ID { get; set; }
 
         public override bool Equals(object? obj)

@@ -12,7 +12,7 @@ namespace AppForSEII2526.API.Models
         {
             this.BonoId = bonoId;
             Cantidad = cantidad;
-            CompraId = compraId;
+            CompraBonoId = compraId;
             PrecioBono = precioBono;
             Compra = compra;
             Bono = bono;
@@ -25,7 +25,7 @@ namespace AppForSEII2526.API.Models
         public int Cantidad {  get; set; }
 
         [Required]
-        public int CompraId { get; set; }
+        public int CompraBonoId { get; set; }
 
         [Required]
         public float PrecioBono { get; set; }
@@ -40,7 +40,7 @@ namespace AppForSEII2526.API.Models
             return obj is BonosComprados comprados &&
                    BonoId == comprados.BonoId &&
                    Cantidad == comprados.Cantidad &&
-                   CompraId == comprados.CompraId &&
+                   CompraBonoId == comprados.CompraBonoId &&
                    PrecioBono == comprados.PrecioBono &&
                    EqualityComparer<CompraBono>.Default.Equals(Compra, comprados.Compra) &&
                    EqualityComparer<BonoBocadillo>.Default.Equals(Bono, comprados.Bono);
@@ -48,7 +48,7 @@ namespace AppForSEII2526.API.Models
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(BonoId, Cantidad, CompraId, PrecioBono, Compra, Bono);
+            return HashCode.Combine(BonoId, Cantidad, CompraBonoId, PrecioBono, Compra, Bono);
         }
     }
 }
