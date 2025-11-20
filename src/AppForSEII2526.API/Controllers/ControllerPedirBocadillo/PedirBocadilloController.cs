@@ -24,7 +24,10 @@ namespace AppForSEII2526.API.Controllers.ControllerPedirBocadillo
         {
             try
             {
-                
+                if (id != null && id <= 0 )
+                {
+                    return NotFound(new { message = "Pedido no encontrado por id igual o menor que cero" }); ;
+                }
                 var compra = await _context.Compra
                     .Include(c => c.Cliente) 
                     .Include(c => c.BocadillosComprados) 

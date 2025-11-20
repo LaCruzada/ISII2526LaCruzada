@@ -116,5 +116,19 @@ namespace AppForSEII2526.UT.BocadilloController_test
             var badRequestResult = Assert.IsType<BadRequestObjectResult>(actionResult.Result);
             Assert.NotNull(badRequestResult.Value);
         }
+
+        [Fact]
+        [Trait("LevelTesting", "Unit Testing")]
+        public async Task GetPedido_IdNegativo_DevuelveNotFound()
+        {
+
+            var controller = new PedirBocadilloController(_context);
+            var IdNegativo = -4;
+
+            var actionResult = await controller.GetPedido(IdNegativo);
+
+            var notFoundResult = Assert.IsType<NotFoundObjectResult>(actionResult.Result);
+            Assert.NotNull(notFoundResult.Value);
+        }
     }
 }
