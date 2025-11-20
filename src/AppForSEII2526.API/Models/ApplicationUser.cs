@@ -14,13 +14,12 @@ public class ApplicationUser : IdentityUser
     {
     }
 
-    public ApplicationUser(string id, string nombre, string apellido1, string email, string address)
+    public ApplicationUser(string nombre, string apellido1, string apellido2)
     {
-        Id = id;
-        UserName = email;
-        Email = email;
+
         Nombre = nombre;
         Apellido1 = apellido1;
+        Apellido2 = apellido2;
     }
 
     [Required]

@@ -1,5 +1,5 @@
 ﻿using AppForSEII2526.API.ComprarBonoBocadilloDTOs;
-using AppForSEII2526.API.Controllers;
+using AppForSEII2526.API.Controllers.ControllerComprarBono;
 using AppForSEII2526.API.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;

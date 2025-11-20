@@ -1,5 +1,5 @@
 ﻿using AppForSEII2526.API.ComprarBonoBocadilloDTOs;
-using AppForSEII2526.API.Controllers;
+using AppForSEII2526.API.Controllers.ControllerComprarBono;
 using AppForSEII2526.API.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -34,15 +34,15 @@ namespace AppForSEII2526.UT.ComprarBonoControllerTest
             };
             _context.Users.Add(_testUser);
 
-         
+
             _testTipoBocadillo = new TipoBocadillo(1, "Vegetal", new List<BonoBocadillo>());
             _context.TipoBocadillos.Add(_testTipoBocadillo);
 
-     
+
             _testBono = new BonoBocadillo(1, 10, 5, "Bono Vegetal 5", 25.0f, _testTipoBocadillo, new List<BonosComprados>());
             _context.BonoBocadillo.Add(_testBono);
 
-     
+
             _testCompraBono = new CompraBono(
                 1,
                 DateTime.Today,
@@ -54,7 +54,7 @@ namespace AppForSEII2526.UT.ComprarBonoControllerTest
             );
             _context.CompraBono.Add(_testCompraBono);
 
-        
+
             var bonoComprado = new BonosComprados
             {
                 CompraId = _testCompraBono.CompraBonoId,
@@ -295,7 +295,7 @@ namespace AppForSEII2526.UT.ComprarBonoControllerTest
 
             Assert.Equal(2, dto.Id);
             Assert.Equal(2, dto.BonosComprados.Count);
-            Assert.Equal(95.0, dto.PrecioTotal); 
+            Assert.Equal(95.0, dto.PrecioTotal);
         }
     }
 }

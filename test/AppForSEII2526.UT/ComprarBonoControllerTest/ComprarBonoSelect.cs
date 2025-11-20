@@ -1,5 +1,5 @@
 ﻿using AppForSEII2526.API.ComprarBonoBocadilloDTOs;
-using AppForSEII2526.API.Controllers;
+using AppForSEII2526.API.Controllers.ControllerComprarBono;
 using AppForSEII2526.API.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -120,7 +120,7 @@ namespace AppForSEII2526.UT.ComprarBonoControllerTest
             var okResult = Assert.IsType<OkObjectResult>(actionResult);
             var bonos = Assert.IsAssignableFrom<IList<ComprarBonosDTO>>(okResult.Value);
 
-           
+
             var nombresOrdenados = bonos.Select(b => b.Nombre).ToList();
             var nombresEsperados = nombresOrdenados.OrderBy(n => n).ToList();
             Assert.Equal(nombresEsperados, nombresOrdenados);
