@@ -25,6 +25,7 @@ namespace AppForSEII2526.API.ComprarBonoBocadilloDTOs
             }
         }
 
+       
         [Required]
         [JsonPropertyName("usuario")]
         public UsuarioCompraDTO usuario { get; set; }

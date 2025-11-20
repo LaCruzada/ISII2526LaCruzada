@@ -41,6 +41,7 @@ namespace AppForSEII2526.API.Controllers
                 .Select(b => new ComprarBonosDTO(b.BonoId, b.nombre, b.PVP, 1, b.tipoBocadillos.nombreTipo))
                 .ToListAsync();
 
+            
             if (bonos == null || !bonos.Any())
             {
                 _logger.LogWarning("No se encontraron bonos que cumplan los criterios de búsqueda");
@@ -123,6 +124,20 @@ namespace AppForSEII2526.API.Controllers
 
             var bonoIDs = compraPorCrear.BonosCompra.Select(b => b.BonoID).ToList<int>();
 
+            //CAMBIO PARA EL EXAMEN 
+            var bonosPvp = await _context.BonoBocadillo
+                .Where(b => b.PVP == null || b.PVP < 3)
+                .ToListAsync();
+
+
+            if (bonosPvp.Count > 0)
+            {
+                ModelState.AddModelError("PVP", "ERROR! El PVP no puede ser menores que 3, tiene que ser mayor que 3");
+                return BadRequest(new ValidationProblemDetails(ModelState));
+            }
+
+            //FIN CAMBIO DE EXAMENES
+
             var bonos = await _context.BonoBocadillo
                 .Include(b => b.bonosComprados)
                 .Include(b => b.tipoBocadillos)
@@ -138,6 +153,9 @@ namespace AppForSEII2526.API.Controllers
                     lineaBono.PrecioUnitario = b.PVP;
                 }
             }
+            
+            
+
 
             ApplicationUser usuarioEnBd = null;
             if (!string.IsNullOrWhiteSpace(compraPorCrear.usuario.UserName))

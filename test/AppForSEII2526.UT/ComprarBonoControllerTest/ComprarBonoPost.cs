@@ -124,6 +124,7 @@ namespace AppForSEII2526.UT.ComprarBonoControllerTest
             Assert.StartsWith(errorEsperado, errorActual);
         }
 
+
         [Fact]
         [Trait("LevelTesting", "Unit Testing")]
         [Trait("Database", "WithoutFixture")]
