@@ -53,7 +53,7 @@ namespace AppForSEII2526.API.Controllers.ControllerComprarBono
                     b.BonoId,
                     b.nombre,
                     b.PVP,
-                    b.cantidadDisponible,
+                    b.nBocadillos,
                     b.tipoBocadillos!= null ? b.tipoBocadillos.nombreTipo : string.Empty
                 ))
                 .ToListAsync();

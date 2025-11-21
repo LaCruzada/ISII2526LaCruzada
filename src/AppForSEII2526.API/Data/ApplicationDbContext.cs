@@ -14,7 +14,6 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<Compra_Producto> Compra_Producto { get; set; }
     public DbSet<Compra> Compra { get; set; }
     public DbSet<CompraBocadillo> CompraBocadillo { get; set; }
-
     public DbSet<ProductoCompra> ProductoCompra { get; set; }
     public DbSet<Producto> Producto { get; set; }
     public DbSet<TipoBocadillo> TipoBocadillos { get; set; }
@@ -26,6 +25,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<Resenya> Resenyas { get; set; }
     public DbSet<ResenyaBocadillo> ResenyaBocadillo { get; set; }
     public DbSet<ResenyaBocadillo> BocadilloId { get; set; }
+    public DbSet<ApplicationUser> usuarios { get; set; }
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);

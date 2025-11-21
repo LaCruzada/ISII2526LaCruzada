@@ -1,202 +1,106 @@
-﻿/*
+﻿using AppForMovies.UT;
 using AppForSEII2526.API.ComprarBonoBocadilloDTOs;
 using AppForSEII2526.API.Controllers.ControllerComprarBono;
-using AppForSEII2526.API.Models;
+using AppForSEII2526.API.DTOs.CompraBonoDTOs;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Xunit;
 
-namespace AppForSEII2526.UT.ComprarBonoControllerTest
+namespace AppForSEII2526.UT.ComprarBonoSelect
 {
-    public class ComprarBonoSelect : AppForMovies.UT.AppForMovies4SqliteUT
+    public class ComprarBonoSelect: AppForMovies4SqliteUT
     {
-        private const string _tipo1Nombre = "Vegetal";
-        private const string _tipo2Nombre = "Mixto";
-        private const string _tipo3Nombre = "Ibérico";
-
         public ComprarBonoSelect()
         {
-            var tipoVegetal = new TipoBocadillo(1, _tipo1Nombre, new List<BonoBocadillo>());
-            var tipoMixto = new TipoBocadillo(2, _tipo2Nombre, new List<BonoBocadillo>());
-            var tipoIberico = new TipoBocadillo(3, _tipo3Nombre, new List<BonoBocadillo>());
+            // Tipos de bocadillo
+            var tipos = new List<TipoBocadillo>()
+            {
+                new TipoBocadillo { idTipo= 1, nombreTipo = "Vegano" },
+                new TipoBocadillo { idTipo = 2, nombreTipo = "Normal" },
+                new TipoBocadillo { idTipo = 3, nombreTipo = "Sin gluten" }
+            };
 
-            _context.TipoBocadillos.AddRange(tipoVegetal, tipoMixto, tipoIberico);
+            // Bonos con IDs específicos para coincidir con las expectativas del test
+            var bonos = new List<BonoBocadillo>()
+            {
+                new BonoBocadillo { BonoId = 1, nombre = "Bono Alpha", PVP = 5.0, nBocadillos = 2, cantidadDisponible = 10, tipoBocadillos = tipos[0] },
+                new BonoBocadillo { BonoId = 2, nombre = "Bono Beta", PVP = 12.0, nBocadillos = 3, cantidadDisponible = 5, tipoBocadillos = tipos[1] },
+                new BonoBocadillo { BonoId = 3, nombre = "Super Bono", PVP = 15.0, nBocadillos = 5, cantidadDisponible = 2, tipoBocadillos = tipos[2] }
+            };
 
-            _context.BonoBocadillo.AddRange(
-                new BonoBocadillo(1, 10, 5, "Bono Vegetal 5", 25.0f, tipoVegetal, new List<BonosComprados>()),
-                new BonoBocadillo(2, 15, 10, "Bono Vegetal 10", 45.0f, tipoVegetal, new List<BonosComprados>()),
-                new BonoBocadillo(3, 0, 10, "Bono Mixto Sin Stock", 40.0f, tipoMixto, new List<BonosComprados>()),
-                new BonoBocadillo(4, 8, 8, "Bono Mixto Premium", 50.0f, tipoMixto, new List<BonosComprados>()),
-                new BonoBocadillo(5, 5, 15, "Bono Ibérico Especial", 70.0f, tipoIberico, new List<BonosComprados>())
-            );
+            _context.AddRange(tipos);
+            _context.AddRange(bonos);
             _context.SaveChanges();
         }
 
-        [Theory]
-        [Trait("LevelTesting", "Unit Testing")]
-        [Trait("Database", "WithoutFixture")]
-        [InlineData(null, null, 5)]              // Sin filtros: todos los bonos (5)
-        [InlineData("Vegetal", null, 2)]         // Filtro por nombre "Vegetal": 2 bonos
-        [InlineData("Mixto", null, 2)]           // Filtro por nombre "Mixto": 2 bonos
-        [InlineData("Ibérico", null, 1)]         // Filtro por nombre "Ibérico": 1 bono
-        [InlineData(null, "Vegetal", 2)]         // Filtro por tipo Vegetal: 2 bonos
-        [InlineData(null, "Mixto", 2)]           // Filtro por tipo Mixto: 2 bonos
-        [InlineData(null, "Ibérico", 1)]         // Filtro por tipo Ibérico: 1 bono
-        [InlineData("Vegetal", "Vegetal", 2)]    // Ambos filtros Vegetal: 2 bonos
-        [InlineData("Mixto", "Mixto", 2)]        // Ambos filtros Mixto: 2 bonos
-        [InlineData("Premium", "Mixto", 1)]      // Nombre "Premium" y tipo Mixto: 1 bono
-        [InlineData("Vegetal", "Mixto", 0)]      // Nombre Vegetal pero tipo Mixto: 0 (NotFound)
-        public async Task GetBonoParaCompra_FiltrosVariados_DevuelveResultadosCorrectos(string? filtroNombre, string? tipoBocadillo, int expectedCount)
+        public static IEnumerable<object[]> TestCasesFor_GetBonos_OK()
         {
-            // Arrange
-            var mock = new Mock<ILogger<CompraBonoController>>();
-            ILogger<CompraBonoController> logger = mock.Object;
-            var controller = new CompraBonoController(_context, logger);
-
-            // Act
-            var actionResult = await controller.GetBonoParaCompra(filtroNombre, tipoBocadillo);
-
-            // Assert
-            if (expectedCount > 0)
+         
+            var expectedAll = new List<ComprarBonosDTO>()
             {
-                var okResult = Assert.IsType<OkObjectResult>(actionResult);
-                var bonos = Assert.IsAssignableFrom<IList<ComprarBonosDTO>>(okResult.Value);
-                Assert.Equal(expectedCount, bonos.Count);
+                new ComprarBonosDTO(1, "Bono Alpha", 5, 2, "Vegano"),
+                new ComprarBonosDTO(2, "Bono Beta", 12.0, 3, "Normal"),
+                new ComprarBonosDTO(3, "Super Bono", 15.0, 5, "Sin gluten")
+            }.OrderBy(x => x.Nombre).ToList();
 
-                // Verificar que todos los bonos cumplen el filtro de nombre si aplica
-                if (!string.IsNullOrEmpty(filtroNombre))
-                {
-                    Assert.All(bonos, b => Assert.Contains(filtroNombre, b.Nombre));
-                }
+          
+            var expectedFilterName = expectedAll.Where(b => b.Nombre.Contains("Bono")).OrderBy(x => x.Nombre).ToList();
 
-                // Verificar que todos los bonos cumplen el filtro de tipo si aplica
-                if (!string.IsNullOrEmpty(tipoBocadillo))
-                {
-                    Assert.All(bonos, b => Assert.Equal(tipoBocadillo, b.Tipo));
-                }
-            }
-            else
+     
+            var expectedTipoNormal = expectedAll.Where(b => b.Tipo == "Normal").ToList();
+
+            return new List<object[]>
             {
-                var notFoundResult = Assert.IsType<NotFoundObjectResult>(actionResult);
-                Assert.Equal("No hay bonos que cumplan los requisitos", notFoundResult.Value);
-            }
-        }
-
-        [Fact]
-        [Trait("LevelTesting", "Unit Testing")]
-        [Trait("Database", "WithoutFixture")]
-        public async Task GetBonoParaCompra_SinResultados_DevuelveNotFound()
-        {
-            // Arrange
-            var mock = new Mock<ILogger<CompraBonoController>>();
-            ILogger<CompraBonoController> logger = mock.Object;
-            var controller = new CompraBonoController(_context, logger);
-
-            // Act
-            var actionResult = await controller.GetBonoParaCompra("NoExiste", null);
-
-            // Assert
-            var notFoundResult = Assert.IsType<NotFoundObjectResult>(actionResult);
-            Assert.Equal("No hay bonos que cumplan los requisitos", notFoundResult.Value);
-        }
-
-        [Fact]
-        [Trait("LevelTesting", "Unit Testing")]
-        [Trait("Database", "WithoutFixture")]
-        public async Task GetBonoParaCompra_TodosLosBonos_VerificarOrden()
-        {
-            // Arrange
-            var mock = new Mock<ILogger<CompraBonoController>>();
-            ILogger<CompraBonoController> logger = mock.Object;
-            var controller = new CompraBonoController(_context, logger);
-
-            // Act
-            var actionResult = await controller.GetBonoParaCompra(null, null);
-
-            // Assert
-            var okResult = Assert.IsType<OkObjectResult>(actionResult);
-            var bonos = Assert.IsAssignableFrom<IList<ComprarBonosDTO>>(okResult.Value);
-
-
-            var nombresOrdenados = bonos.Select(b => b.Nombre).ToList();
-            var nombresEsperados = nombresOrdenados.OrderBy(n => n).ToList();
-            Assert.Equal(nombresEsperados, nombresOrdenados);
-        }
-
-        [Fact]
-        [Trait("LevelTesting", "Unit Testing")]
-        [Trait("Database", "WithoutFixture")]
-        public async Task GetBonoParaCompra_VerificarDTOCompleto()
-        {
-            // Arrange
-            var mock = new Mock<ILogger<CompraBonoController>>();
-            ILogger<CompraBonoController> logger = mock.Object;
-            var controller = new CompraBonoController(_context, logger);
-
-            // Act
-            var actionResult = await controller.GetBonoParaCompra("Bono Ibérico Especial", _tipo3Nombre);
-
-            // Assert
-            var okResult = Assert.IsType<OkObjectResult>(actionResult);
-            var bonos = Assert.IsAssignableFrom<IList<ComprarBonosDTO>>(okResult.Value);
-
-            Assert.Single(bonos);
-            var bono = bonos[0];
-            Assert.Equal(5, bono.BonoID);
-            Assert.Equal("Bono Ibérico Especial", bono.Nombre);
-            Assert.Equal(70.0, bono.PrecioCompra);
-            Assert.Equal(1, bono.Cantidad); // Cantidad por defecto
-            Assert.Equal(_tipo3Nombre, bono.Tipo);
+                new object[] { null, null, expectedAll },
+                new object[] { "Bono", null, expectedFilterName },
+                new object[] { null, "Normal", expectedTipoNormal }
+            };
         }
 
         [Theory]
-        [Trait("LevelTesting", "Unit Testing")]
-        [Trait("Database", "WithoutFixture")]
-        [InlineData("Vegetal", 2)]
-        [InlineData("Mixto", 2)]
-        [InlineData("Ibérico", 1)]
-        public async Task GetBonoParaCompra_FiltroPorTipo_CuentaCorrecta(string tipoBocadillo, int expectedCount)
+        [MemberData(nameof(TestCasesFor_GetBonos_OK))]
+        public async Task GetBonoParaCompra_OK_test(string? filtroNombre, string? tipoBocadillo, IList<ComprarBonosDTO> expected)
         {
             // Arrange
-            var mock = new Mock<ILogger<CompraBonoController>>();
-            ILogger<CompraBonoController> logger = mock.Object;
-            var controller = new CompraBonoController(_context, logger);
+            var mock = new Mock<ILogger<BonoController>>();
+            var controller = new BonoController(_context, mock.Object);
 
             // Act
-            var actionResult = await controller.GetBonoParaCompra(null, tipoBocadillo);
+            var result = await controller.GetBonoParaCompra(filtroNombre, tipoBocadillo);
 
             // Assert
-            var okResult = Assert.IsType<OkObjectResult>(actionResult);
-            var bonos = Assert.IsAssignableFrom<IList<ComprarBonosDTO>>(okResult.Value);
-            Assert.Equal(expectedCount, bonos.Count);
-            Assert.All(bonos, b => Assert.Equal(tipoBocadillo, b.Tipo));
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var actual = Assert.IsType<List<ComprarBonosDTO>>(okResult.Value);
+
+           
+            var expectedTuples = expected.Select(e => (e.Nombre, e.PrecioCompra, e.Cantidad, e.Tipo)).ToList();
+            var actualTuples = actual.Select(a => (a.Nombre, a.PrecioCompra, a.Cantidad, a.Tipo)).ToList();
+
+            Assert.Equal(expectedTuples, actualTuples);
         }
 
         [Fact]
-        [Trait("LevelTesting", "Unit Testing")]
-        [Trait("Database", "WithoutFixture")]
-        public async Task GetBonoParaCompra_IncluirBonosSinStock_DevuelveTodos()
+        public async Task GetBonoParaCompra_NotFound_test()
         {
             // Arrange
-            var mock = new Mock<ILogger<CompraBonoController>>();
-            ILogger<CompraBonoController> logger = mock.Object;
-            var controller = new CompraBonoController(_context, logger);
+            var mock = new Mock<ILogger<BonoController>>();
+            var controller = new BonoController(_context, mock.Object);
+
+  
+            _context.BonoBocadillo.RemoveRange(_context.BonoBocadillo);
+            _context.SaveChanges();
 
             // Act
-            var actionResult = await controller.GetBonoParaCompra(null, null);
+            var result = await controller.GetBonoParaCompra(null, null);
 
             // Assert
-            var okResult = Assert.IsType<OkObjectResult>(actionResult);
-            var bonos = Assert.IsAssignableFrom<IList<ComprarBonosDTO>>(okResult.Value);
+            var notFound = Assert.IsType<NotFoundObjectResult>(result);
 
-            // Verificar que se incluye el bono sin stock (ID 3)
-            Assert.Equal(5, bonos.Count);
-            Assert.Contains(bonos, b => b.BonoID == 3 && b.Nombre == "Bono Mixto Sin Stock");
+            // Comprobar que el mensaje exacto devuelto por el controlador está presente
+            Assert.Equal("No hay bonos que cumplan los requisitos", notFound.Value);
         }
     }
 }
-*/
