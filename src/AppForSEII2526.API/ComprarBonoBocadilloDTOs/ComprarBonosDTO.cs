@@ -34,20 +34,6 @@
         [JsonPropertyName("Tipo")]
         public string Tipo { get; set; }
 
-        public override bool Equals(object? obj)
-        {
-            return obj is ComprarBonosDTO dTO &&
-                   BonoID == dTO.BonoID &&
-                   Nombre == dTO.Nombre &&
-                   PrecioCompra == dTO.PrecioCompra &&
-                   Cantidad == dTO.Cantidad &&
-                   Tipo == dTO.Tipo;
-        }
-
-        public override int GetHashCode()
-        {
-            return HashCode.Combine(BonoID, Nombre, PrecioCompra, Cantidad, Tipo);
-        }
     }
 
 }

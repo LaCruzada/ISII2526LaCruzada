@@ -26,7 +26,7 @@ namespace AppForSEII2526.API.Models
             PrecioTotalBono = precioTotalBono;
             this.metodoPago = metodoPago;
             this.bonosComprados = bonosComprados;
-            this.usuario = usuario;
+            this.usuarios = usuario;
         }
 
         [Key]
@@ -47,7 +47,7 @@ namespace AppForSEII2526.API.Models
 
         public List<BonosComprados> bonosComprados { get; set; } = new List<BonosComprados>();
 
-        public List<ApplicationUser> usuario { get; set;  } = new List<ApplicationUser>();
+        public List<ApplicationUser> usuarios { get; set;  } = new List<ApplicationUser>();
 
         public override bool Equals(object? obj)
         {
@@ -58,12 +58,12 @@ namespace AppForSEII2526.API.Models
                    PrecioTotalBono == bono.PrecioTotalBono &&
                    metodoPago == bono.metodoPago &&
                    EqualityComparer<List<BonosComprados>>.Default.Equals(bonosComprados, bono.bonosComprados) &&
-                   EqualityComparer<List<ApplicationUser>>.Default.Equals(usuario, bono.usuario);
+                   EqualityComparer<List<ApplicationUser>>.Default.Equals(usuarios, bono.usuarios);
         }
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(CompraBonoId, FechaCompraBono, nBonos, PrecioTotalBono, metodoPago, bonosComprados, usuario);
+            return HashCode.Combine(CompraBonoId, FechaCompraBono, nBonos, PrecioTotalBono, metodoPago, bonosComprados, usuarios);
         }
     }
 }

@@ -14,7 +14,6 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<Compra_Producto> Compra_Producto { get; set; }
     public DbSet<Compra> Compra { get; set; }
     public DbSet<CompraBocadillo> CompraBocadillo { get; set; }
-
     public DbSet<ProductoCompra> ProductoCompra { get; set; }
     public DbSet<Producto> Producto { get; set; }
     public DbSet<TipoBocadillo> TipoBocadillos { get; set; }
@@ -26,12 +25,13 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<Resenya> Resenyas { get; set; }
     public DbSet<ResenyaBocadillo> ResenyaBocadillo { get; set; }
     public DbSet<ResenyaBocadillo> BocadilloId { get; set; }
+    public DbSet<ApplicationUser> usuarios { get; set; }
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
 
         builder.Entity<ProductoCompra>().HasKey(pc => new { pc.CompraId, pc.ProductoId });
-        builder.Entity<BonosComprados>().HasKey(pi => new { pi.BonoId, pi.CompraId });
+        builder.Entity<BonosComprados>().HasKey(pi => new { pi.BonoId, pi.CompraBonoId });
         builder.Entity<ResenyaBocadillo>().HasKey(pc => new { pc.BocadilloId, pc.ResenyaId });
         builder.Entity<CompraBocadillo>().HasKey(pc => new { pc.CompraId, pc.BocadilloId });
     }
