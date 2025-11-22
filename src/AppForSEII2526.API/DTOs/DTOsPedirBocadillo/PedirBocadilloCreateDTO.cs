@@ -30,5 +30,21 @@ namespace AppForSEII2526.API.DTOs.DTOsPedirBocadillo
 
         [MinLength(1, ErrorMessage = "Debe seleccionar al menos un bocadillo")]
         public List<BocadilloPedidoItemDTO> Bocadillos { get; set; }
+
+        public override bool Equals(object? obj)
+        {
+            return obj is PedirBocadilloCreateDTO dTO &&
+                   NombreCliente == dTO.NombreCliente &&
+                   Apellido1Cliente == dTO.Apellido1Cliente &&
+                   Apellido2Cliente == dTO.Apellido2Cliente &&
+                   EmailCliente == dTO.EmailCliente &&
+                   MetodoPago == dTO.MetodoPago &&
+                   EqualityComparer<List<BocadilloPedidoItemDTO>>.Default.Equals(Bocadillos, dTO.Bocadillos);
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(NombreCliente, Apellido1Cliente, Apellido2Cliente, EmailCliente, MetodoPago, Bocadillos);
+        }
     }
 }
