@@ -11,7 +11,7 @@ on:
 
 
 env:
-  API_PROJECT_PATH: 'AppForSEII2526.API/AppForSEII2526.API.csproj'
+  API_PROJECT_PATH: 'src/AppForSEII2526.API/AppForSEII2526.API.csproj'
 
 jobs:
   build:
@@ -69,3 +69,4 @@ jobs:
           app-name: 'pedirbocadillo'
           slot-name: 'Production'
           package: .
+
