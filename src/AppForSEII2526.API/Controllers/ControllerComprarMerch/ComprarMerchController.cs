@@ -89,6 +89,11 @@ namespace AppForSEII2526.API.Controllers
                     return BadRequest(new { message = "Todos los campos obligatorios deben rellenarse" });
                 }
 
+                if (!createDto.DireccionEnvio.Contains("Calle"))
+                {
+                    return BadRequest(new { message = "Error!, por favor introduce una direccion de envio valida" });
+                }
+
                 // Obtener o crear cliente
                 var cliente = await _context.Users
                     .FirstOrDefaultAsync(u => u.Email == createDto.EmailCliente);
