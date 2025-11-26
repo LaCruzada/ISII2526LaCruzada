@@ -18,21 +18,22 @@ namespace AppForSEII2526.API.Controllers.ControllerPedirBocadillo
             _context = context;
         }
 
-       
+
         [HttpGet("{id}")]
         public async Task<ActionResult<PedidoBocadilloDetailsDTO>> GetPedido(int id)
         {
             try
             {
-                if (id != null && id <= 0 )
+                if (id != null && id <= 0)
                 {
-                    return NotFound(new { message = "Pedido no encontrado por id igual o menor que cero" }); ;
+                    return NotFound(new { message = "Pedido no encontrado por id igual o menor que cero" });
                 }
+
                 var compra = await _context.Compra
-                    .Include(c => c.Cliente) 
-                    .Include(c => c.BocadillosComprados) 
-                        .ThenInclude(bc => bc.Bocadillo) 
-                            .ThenInclude(b => b.TipoPan) 
+                    .Include(c => c.Cliente)
+                    .Include(c => c.BocadillosComprados)
+                        .ThenInclude(bc => bc.Bocadillo)
+                            .ThenInclude(b => b.TipoPan)
                     .FirstOrDefaultAsync(c => c.CompraId == id);
 
                 if (compra == null)
@@ -55,7 +56,6 @@ namespace AppForSEII2526.API.Controllers.ControllerPedirBocadillo
                     MetodoPago = compra.MetodoPago.ToString(),
                     PrecioTotal = (decimal)compra.PrecioTotal,
 
-                   
                     Bocadillos = compra.BocadillosComprados.Select(cb => new BocadilloItemDTO
                     {
                         BocadilloId = cb.BocadilloId,
@@ -74,7 +74,7 @@ namespace AppForSEII2526.API.Controllers.ControllerPedirBocadillo
             }
         }
 
-        
+
         [HttpPost]
         public async Task<ActionResult> CrearPedido([FromBody] PedirBocadilloCreateDTO createDto)
         {

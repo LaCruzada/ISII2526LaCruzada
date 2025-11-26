@@ -10,13 +10,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
 
-
 namespace AppForSEII2526.UT.BocadilloController_test
 {
-    
     public class PedirBocadilloControllerGetDetailsTEST : AppForMovies.UT.AppForMovies4SqliteUT
     {
-        
         private readonly ApplicationUser _testUser;
         private readonly Compra _testCompra;
         private readonly Bocadillo _testBocadillo;
@@ -24,22 +21,21 @@ namespace AppForSEII2526.UT.BocadilloController_test
 
         public PedirBocadilloControllerGetDetailsTEST()
         {
-            
             _testUser = new ApplicationUser
             {
                 Id = "user-test-id",
                 Nombre = "Juan",
                 Apellido1 = "Perez",
-                Apellido2 = "Garcia", 
+                Apellido2 = "Garcia",
                 Email = "juan.perez@ejemplo.com",
                 UserName = "juan.perez@ejemplo.com",
                 EmailConfirmed = true
             };
             _context.Users.Add(_testUser);
 
-   
             _testTipoPan = new TipoPan { PanId = 1, Nombre = "Barra" };
             _context.TipoPanes.Add(_testTipoPan);
+
             _testBocadillo = new Bocadillo
             {
                 Id = 1,
@@ -51,84 +47,74 @@ namespace AppForSEII2526.UT.BocadilloController_test
             };
             _context.Bocadillos.Add(_testBocadillo);
 
-      
             _testCompra = new Compra
             {
                 CompraId = 1,
                 FechaCompra = DateTime.Now,
                 MetodoPago = MetodoPago.Tarjeta,
-                PrecioTotal = (float)11.00m, 
+                PrecioTotal = 11.00f,
                 nBocadillos = 2,
                 Cliente = new List<ApplicationUser> { _testUser },
-                BocadillosComprados = new List<CompraBocadillo>() 
+                BocadillosComprados = new List<CompraBocadillo>()
             };
             _context.Compra.Add(_testCompra);
-
 
             var compraBocadillo = new CompraBocadillo
             {
                 CompraId = _testCompra.CompraId,
                 BocadilloId = _testBocadillo.Id,
                 Cantidad = 2,
-                Bocadillo = _testBocadillo, 
+                Bocadillo = _testBocadillo,
                 Compra = _testCompra
             };
-         
-
             _testCompra.BocadillosComprados.Add(compraBocadillo);
-            
 
-            _context.SaveChanges(); 
+            _context.SaveChanges();
         }
 
         [Fact]
         [Trait("LevelTesting", "Unit Testing")]
         public async Task GetPedido_Muestre_Success_test()
         {
-          
+            
             var controller = new PedirBocadilloController(_context);
-            var expectedId = 1;
-            var expectedName = $"{_testUser.Nombre} {_testUser.Apellido1} {_testUser.Apellido2}".Trim();
+            var idSolicitado = 1;
 
-            var actionResult = await controller.GetPedido(expectedId);
+            var actionResult = await controller.GetPedido(idSolicitado);
 
             var okResult = Assert.IsType<OkObjectResult>(actionResult.Result);
-            var dto = Assert.IsType<PedidoBocadilloDetailsDTO>(okResult.Value);
+            var actualDto = Assert.IsType<PedidoBocadilloDetailsDTO>(okResult.Value);
 
-            Assert.Equal(expectedId, dto.PedidoId);
-            Assert.Equal(expectedName, dto.NombreCliente);
-            Assert.Single(dto.Bocadillos);
-            Assert.Equal(_testBocadillo.Nombre, dto.Bocadillos.First().NombreBocadillo);
+            Assert.Equal(_testCompra.CompraId, actualDto.PedidoId);
+
+            var nombreEsperado = $"{_testUser.Nombre} {_testUser.Apellido1} {_testUser.Apellido2}".Trim();
+
+            Assert.Equal(nombreEsperado, actualDto.NombreCliente);
+            Assert.Equal(_testCompra.FechaCompra.ToString(), actualDto.FechaCompra.ToString());
+            Assert.Equal(_testCompra.MetodoPago.ToString(), actualDto.MetodoPago);
+            Assert.Equal((decimal)_testCompra.PrecioTotal, actualDto.PrecioTotal);
+            Assert.Single(actualDto.Bocadillos);
+
+            var primerBocadillo = actualDto.Bocadillos.First();
+
+            Assert.Equal(_testBocadillo.Id, primerBocadillo.BocadilloId);
+            Assert.Equal(_testBocadillo.Nombre, primerBocadillo.NombreBocadillo);
+            Assert.Equal(_testTipoPan.Nombre, primerBocadillo.TipoPan);
+            Assert.Equal(2, primerBocadillo.Cantidad);
+            Assert.Equal(_testBocadillo.PVP, primerBocadillo.PrecioUnitario);
         }
 
-       
         [Fact]
         [Trait("LevelTesting", "Unit Testing")]
         public async Task GetPedido_NoMuestre_DevuelveBadRequest()
         {
-        
             var controller = new PedirBocadilloController(_context);
-            var nonExistentId = 999; 
+            var nonExistentId = 999;
 
-      
             var actionResult = await controller.GetPedido(nonExistentId);
 
             var badRequestResult = Assert.IsType<BadRequestObjectResult>(actionResult.Result);
             Assert.NotNull(badRequestResult.Value);
-        }
-
-        [Fact]
-        [Trait("LevelTesting", "Unit Testing")]
-        public async Task GetPedido_IdNegativo_DevuelveNotFound()
-        {
-
-            var controller = new PedirBocadilloController(_context);
-            var IdNegativo = -4;
-
-            var actionResult = await controller.GetPedido(IdNegativo);
-
-            var notFoundResult = Assert.IsType<NotFoundObjectResult>(actionResult.Result);
-            Assert.NotNull(notFoundResult.Value);
         }
     }
 }

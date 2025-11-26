@@ -11,12 +11,12 @@ namespace AppForSEII2526.API.DTOs.DTOsPedirBocadillo
 
         public override bool Equals(object? obj)
         {
-            return obj is BocadilloItemDTO dTO &&
-                   BocadilloId == dTO.BocadilloId &&
-                   NombreBocadillo == dTO.NombreBocadillo &&
-                   TipoPan == dTO.TipoPan &&
-                   Cantidad == dTO.Cantidad &&
-                   PrecioUnitario == dTO.PrecioUnitario;
+            return obj is BocadilloItemDTO dto &&
+                   BocadilloId == dto.BocadilloId &&
+                   NombreBocadillo == dto.NombreBocadillo &&
+                   TipoPan == dto.TipoPan &&
+                   Cantidad == dto.Cantidad &&
+                   PrecioUnitario == dto.PrecioUnitario;
         }
 
         public override int GetHashCode()
