@@ -67,7 +67,7 @@ namespace AppForSEII2526.UT.BocadilloController_test
                 Bocadillo = _testBocadillo,
                 Compra = _testCompra
             };
-            _testCompra.BocadillosComprados.Add(compraBocadillo);
+            _context.CompraBocadillo.Add(compraBocadillo);
 
             _context.SaveChanges();
         }
@@ -76,32 +76,35 @@ namespace AppForSEII2526.UT.BocadilloController_test
         [Trait("LevelTesting", "Unit Testing")]
         public async Task GetPedido_Muestre_Success_test()
         {
-            
             var controller = new PedirBocadilloController(_context);
             var idSolicitado = 1;
+
+            var expectedDto = new PedidoBocadilloDetailsDTO
+            {
+                PedidoId = _testCompra.CompraId,
+                NombreCliente = $"{_testUser.Nombre} {_testUser.Apellido1} {_testUser.Apellido2}".Trim(),
+                FechaCompra = _testCompra.FechaCompra,
+                MetodoPago = _testCompra.MetodoPago.ToString(),
+                PrecioTotal = (decimal)_testCompra.PrecioTotal, 
+                Bocadillos = new List<BocadilloItemDTO>
+                {
+                    new BocadilloItemDTO
+                    {
+                        BocadilloId = _testBocadillo.Id,
+                        NombreBocadillo = _testBocadillo.Nombre,
+                        TipoPan = _testTipoPan.Nombre,
+                        Cantidad = 2,
+                        PrecioUnitario = _testBocadillo.PVP
+                    }
+                }
+            };
 
             var actionResult = await controller.GetPedido(idSolicitado);
 
             var okResult = Assert.IsType<OkObjectResult>(actionResult.Result);
             var actualDto = Assert.IsType<PedidoBocadilloDetailsDTO>(okResult.Value);
-
-            Assert.Equal(_testCompra.CompraId, actualDto.PedidoId);
-
-            var nombreEsperado = $"{_testUser.Nombre} {_testUser.Apellido1} {_testUser.Apellido2}".Trim();
-
-            Assert.Equal(nombreEsperado, actualDto.NombreCliente);
-            Assert.Equal(_testCompra.FechaCompra.ToString(), actualDto.FechaCompra.ToString());
-            Assert.Equal(_testCompra.MetodoPago.ToString(), actualDto.MetodoPago);
-            Assert.Equal((decimal)_testCompra.PrecioTotal, actualDto.PrecioTotal);
-            Assert.Single(actualDto.Bocadillos);
-
-            var primerBocadillo = actualDto.Bocadillos.First();
-
-            Assert.Equal(_testBocadillo.Id, primerBocadillo.BocadilloId);
-            Assert.Equal(_testBocadillo.Nombre, primerBocadillo.NombreBocadillo);
-            Assert.Equal(_testTipoPan.Nombre, primerBocadillo.TipoPan);
-            Assert.Equal(2, primerBocadillo.Cantidad);
-            Assert.Equal(_testBocadillo.PVP, primerBocadillo.PrecioUnitario);
+            expectedDto.FechaCompra = actualDto.FechaCompra;
+            Assert.Equal(expectedDto, actualDto);
         }
 
         [Fact]
