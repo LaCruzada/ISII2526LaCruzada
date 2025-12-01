@@ -1,4 +1,5 @@
-﻿namespace AppForSEII2526.API.DTOs.DTOsPedirBocadillo
+﻿
+namespace AppForSEII2526.API.DTOs.DTOsPedirBocadillo
 {
     //Para el BocadilloSelectController
     public class BocadilloSelectDTO
@@ -9,5 +10,21 @@
         public string TipoPan { get; set; }
         public string Tamano { get; set; } 
         public int Stock { get; set; }
+
+        public override bool Equals(object? obj)
+        {
+            return obj is BocadilloSelectDTO dTO &&
+                   Id == dTO.Id &&
+                   Nombre == dTO.Nombre &&
+                   Precio == dTO.Precio &&
+                   TipoPan == dTO.TipoPan &&
+                   Tamano == dTO.Tamano &&
+                   Stock == dTO.Stock;
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Id, Nombre, Precio, TipoPan, Tamano, Stock);
+        }
     }
 }
