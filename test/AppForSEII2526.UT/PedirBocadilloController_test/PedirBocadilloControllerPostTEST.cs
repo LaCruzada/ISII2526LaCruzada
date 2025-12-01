@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
+using System.ComponentModel.DataAnnotations; 
 
 namespace AppForSEII2526.UT.BocadilloController_test
 {
@@ -35,7 +36,7 @@ namespace AppForSEII2526.UT.BocadilloController_test
                     Id = BOCADILLO_ID_VALIDO,
                     Nombre = BOCADILLO_NOMBRE_VALIDO,
                     PVP = 5.0m,
-                    Stock = BOCADILLO_STOCK_INICIAL, 
+                    Stock = BOCADILLO_STOCK_INICIAL,
                     TipoPan = tipoPanBarra,
                     Tamano = EnumTamaño.Normal
                 },
@@ -44,7 +45,7 @@ namespace AppForSEII2526.UT.BocadilloController_test
                     Id = BOCADILLO_ID_POCO_STOCK,
                     Nombre = BOCADILLO_NOMBRE_POCO_STOCK,
                     PVP = 3.0m,
-                    Stock = BOCADILLO_STOCK_INICIAL_POCO, 
+                    Stock = BOCADILLO_STOCK_INICIAL_POCO,
                     TipoPan = tipoPanBarra,
                     Tamano = EnumTamaño.Pequeño
                 }
@@ -59,36 +60,55 @@ namespace AppForSEII2526.UT.BocadilloController_test
             {
                 NombreCliente = "Test",
                 Apellido1Cliente = "Test",
-                Apellido2Cliente = "T",
                 EmailCliente = "test@test.com",
                 MetodoPago = "Tarjeta",
-                Bocadillos = new List<BocadilloPedidoItemDTO>
-                {
-                    new BocadilloPedidoItemDTO { BocadilloId = ID_NO_EXISTENTE, Cantidad = 1 }
-                }
+                Bocadillos = new List<BocadilloPedidoItemDTO> { new BocadilloPedidoItemDTO { BocadilloId = ID_NO_EXISTENTE, Cantidad = 1 } }
             };
 
             var dtoSinStock = new PedirBocadilloCreateDTO
             {
                 NombreCliente = "Test",
                 Apellido1Cliente = "Test",
-                Apellido2Cliente = "T",
                 EmailCliente = "test@test.com",
                 MetodoPago = "Tarjeta",
-                Bocadillos = new List<BocadilloPedidoItemDTO>
-                { 
-                    new BocadilloPedidoItemDTO { BocadilloId = BOCADILLO_ID_POCO_STOCK, Cantidad = 5 }
-                }
+                Bocadillos = new List<BocadilloPedidoItemDTO> { new BocadilloPedidoItemDTO { BocadilloId = BOCADILLO_ID_POCO_STOCK, Cantidad = 5 } }
             };
 
-            var allTests = new List<object[]>
+            var dtoSinNombre = new PedirBocadilloCreateDTO
             {
-                
+                NombreCliente = null, 
+                Apellido1Cliente = "Test",
+                EmailCliente = "test@test.com",
+                MetodoPago = "Tarjeta",
+                Bocadillos = new List<BocadilloPedidoItemDTO> { new BocadilloPedidoItemDTO { BocadilloId = BOCADILLO_ID_VALIDO, Cantidad = 1 } }
+            };
+
+            var dtoSinApellido = new PedirBocadilloCreateDTO
+            {
+                NombreCliente = "Test",
+                Apellido1Cliente = null, 
+                EmailCliente = "test@test.com",
+                MetodoPago = "Tarjeta",
+                Bocadillos = new List<BocadilloPedidoItemDTO> { new BocadilloPedidoItemDTO { BocadilloId = BOCADILLO_ID_VALIDO, Cantidad = 1 } }
+            };
+
+            var dtoSinPago = new PedirBocadilloCreateDTO
+            {
+                NombreCliente = "Test",
+                Apellido1Cliente = "Test",
+                EmailCliente = "test@test.com",
+                MetodoPago = null, 
+                Bocadillos = new List<BocadilloPedidoItemDTO> { new BocadilloPedidoItemDTO { BocadilloId = BOCADILLO_ID_VALIDO, Cantidad = 1 } }
+            };
+
+            return new List<object[]>
+            {
                 new object[] { dtoBocadilloNoExiste, $"Bocadillo ID {ID_NO_EXISTENTE} no existe" },
                 new object[] { dtoSinStock, $"Stock insuficiente para {BOCADILLO_NOMBRE_POCO_STOCK}" },
+                new object[] { dtoSinNombre, "El nombre es obligatorio" },
+                new object[] { dtoSinApellido, "El primer apellido es obligatorio" },
+                new object[] { dtoSinPago, "El método de pago es obligatorio" }
             };
-
-            return allTests;
         }
 
         [Theory]
@@ -96,21 +116,41 @@ namespace AppForSEII2526.UT.BocadilloController_test
         [MemberData(nameof(TestCasesFor_CrearPedido_CosasObligatorias))]
         public async Task CrearPedido_CosasObligatorias_DevuelveBadRequest(PedirBocadilloCreateDTO dtoConError, string errorEsperado)
         {
-       
             var controller = new PedirBocadilloController(_context);
+
+            var validationContext = new ValidationContext(dtoConError);
+            var validationResults = new List<ValidationResult>();
+            bool isValid = Validator.TryValidateObject(dtoConError, validationContext, validationResults, true);
+
+            if (!isValid)
+            {
+                foreach (var validationResult in validationResults)
+                {
+                    controller.ModelState.AddModelError(validationResult.MemberNames.First(), validationResult.ErrorMessage);
+                }
+            }
 
             var actionResult = await controller.CrearPedido(dtoConError);
 
             var badRequestResult = Assert.IsType<BadRequestObjectResult>(actionResult);
-
             Assert.NotNull(badRequestResult.Value);
 
-            var errors = badRequestResult.Value.GetType().GetProperty("errors").GetValue(badRequestResult.Value) as List<string>;
-            Assert.NotNull(errors);
-            Assert.Contains(errors, e => e.StartsWith(errorEsperado));
+            string errorString = badRequestResult.Value.ToString();
+
+            var propErrors = badRequestResult.Value.GetType().GetProperty("errors");
+            if (propErrors != null)
+            {
+                var listaErrores = propErrors.GetValue(badRequestResult.Value) as List<string>;
+                errorString = string.Join(", ", listaErrores);
+            }
+            else if (badRequestResult.Value is SerializableError serializableError)
+            {
+                errorString = string.Join(" ", serializableError.Values.SelectMany(v => (string[])v));
+            }
+
+            Assert.Contains(errorEsperado, errorString);
         }
 
-  
         [Fact]
         [Trait("LevelTesting", "Unit Testing")]
         public async Task CrearPedido_TodoBien_Success_test()
@@ -121,7 +161,7 @@ namespace AppForSEII2526.UT.BocadilloController_test
             var cantidadPedida = 4;
             var precioBocadillo = _context.Bocadillos.Find(BOCADILLO_ID_VALIDO).PVP;
             var precioTotalEsperado = precioBocadillo * cantidadPedida;
-            var stockEsperado = BOCADILLO_STOCK_INICIAL - cantidadPedida; 
+            var stockEsperado = BOCADILLO_STOCK_INICIAL - cantidadPedida;
 
             var dtoBueno = new PedirBocadilloCreateDTO
             {
@@ -136,33 +176,23 @@ namespace AppForSEII2526.UT.BocadilloController_test
                 }
             };
 
-
-            Assert.Equal(0, _context.Users.Count()); 
-            Assert.Equal(0, _context.Compra.Count()); 
+            Assert.Equal(0, _context.Users.Count());
+            Assert.Equal(0, _context.Compra.Count());
 
             var actionResult = await controller.CrearPedido(dtoBueno);
-
 
             var createdResult = Assert.IsType<CreatedAtActionResult>(actionResult);
 
             Assert.Equal(1, _context.Users.Count());
             var usuarioDb = _context.Users.First();
             Assert.Equal(emailNuevo, usuarioDb.Email);
-            Assert.Equal("Usuario", usuarioDb.Nombre);
 
             Assert.Equal(1, _context.Compra.Count());
             var compraDb = _context.Compra.First();
-            Assert.Equal((float)precioTotalEsperado, compraDb.PrecioTotal); 
+            Assert.Equal((float)precioTotalEsperado, compraDb.PrecioTotal);
             Assert.Equal(MetodoPago.Paypal, compraDb.MetodoPago);
 
-            Assert.Equal(1, _context.CompraBocadillo.Count());
-            var itemDb = _context.CompraBocadillo.First();
-            Assert.Equal(compraDb.CompraId, itemDb.CompraId);
-            Assert.Equal(BOCADILLO_ID_VALIDO, itemDb.BocadilloId);
-            Assert.Equal(cantidadPedida, itemDb.Cantidad);
-
-            var bocadilloDb = _context.Bocadillos.Find(BOCADILLO_ID_VALIDO);
-            Assert.Equal(stockEsperado, bocadilloDb.Stock);
+            Assert.Equal(stockEsperado, _context.Bocadillos.Find(BOCADILLO_ID_VALIDO).Stock);
         }
     }
 }

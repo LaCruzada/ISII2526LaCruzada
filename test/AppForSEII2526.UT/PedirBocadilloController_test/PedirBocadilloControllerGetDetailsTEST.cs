@@ -52,7 +52,7 @@ namespace AppForSEII2526.UT.BocadilloController_test
                 CompraId = 1,
                 FechaCompra = DateTime.Now,
                 MetodoPago = MetodoPago.Tarjeta,
-                PrecioTotal = 11.00f,
+                PrecioTotal = 11.00f, 
                 nBocadillos = 2,
                 Cliente = new List<ApplicationUser> { _testUser },
                 BocadillosComprados = new List<CompraBocadillo>()
@@ -67,7 +67,7 @@ namespace AppForSEII2526.UT.BocadilloController_test
                 Bocadillo = _testBocadillo,
                 Compra = _testCompra
             };
-            _context.CompraBocadillo.Add(compraBocadillo);
+            _testCompra.BocadillosComprados.Add(compraBocadillo);
 
             _context.SaveChanges();
         }
@@ -82,10 +82,16 @@ namespace AppForSEII2526.UT.BocadilloController_test
             var expectedDto = new PedidoBocadilloDetailsDTO
             {
                 PedidoId = _testCompra.CompraId,
-                NombreCliente = $"{_testUser.Nombre} {_testUser.Apellido1} {_testUser.Apellido2}".Trim(),
-                FechaCompra = _testCompra.FechaCompra,
+
+                NombreCliente = _testUser.Nombre,       
+                Apellido1Cliente = _testUser.Apellido1, 
+                Apellido2Cliente = _testUser.Apellido2, 
+                EmailCliente = _testUser.Email,        
+
+                FechaCompra = DateTime.MinValue,
                 MetodoPago = _testCompra.MetodoPago.ToString(),
-                PrecioTotal = (decimal)_testCompra.PrecioTotal, 
+                PrecioTotal = (decimal)_testCompra.PrecioTotal,
+
                 Bocadillos = new List<BocadilloItemDTO>
                 {
                     new BocadilloItemDTO
@@ -100,10 +106,11 @@ namespace AppForSEII2526.UT.BocadilloController_test
             };
 
             var actionResult = await controller.GetPedido(idSolicitado);
-
             var okResult = Assert.IsType<OkObjectResult>(actionResult.Result);
             var actualDto = Assert.IsType<PedidoBocadilloDetailsDTO>(okResult.Value);
+
             expectedDto.FechaCompra = actualDto.FechaCompra;
+
             Assert.Equal(expectedDto, actualDto);
         }
 
