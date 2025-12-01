@@ -4,30 +4,30 @@ using System.Linq;
 
 namespace AppForSEII2526.API.DTOs.DTOsPedirBocadillo
 {
-    public class PedidoBocadilloDetailsDTO
+    public class PedidoBocadilloDetailsDTO : PedirBocadilloCreateDTO
     {
         public int PedidoId { get; set; }
-        public string NombreCliente { get; set; }
+
         public DateTime FechaCompra { get; set; }
-        public string MetodoPago { get; set; }
         public decimal PrecioTotal { get; set; }
-        public List<BocadilloItemDTO> Bocadillos { get; set; }
+
+        public new List<BocadilloItemDTO> Bocadillos { get; set; }
 
         public override bool Equals(object? obj)
         {
             return obj is PedidoBocadilloDetailsDTO dto &&
                    PedidoId == dto.PedidoId &&
-                   NombreCliente == dto.NombreCliente &&
                    FechaCompra == dto.FechaCompra &&
-                   MetodoPago == dto.MetodoPago &&
                    PrecioTotal == dto.PrecioTotal &&
+                   NombreCliente == dto.NombreCliente &&
+                   Apellido1Cliente == dto.Apellido1Cliente &&
+                   MetodoPago == dto.MetodoPago &&
                    (Bocadillos != null && dto.Bocadillos != null && Bocadillos.SequenceEqual(dto.Bocadillos));
-            
         }
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(PedidoId, NombreCliente, FechaCompra, MetodoPago, PrecioTotal);
+            return HashCode.Combine(PedidoId, FechaCompra, PrecioTotal, NombreCliente, Apellido1Cliente);
         }
     }
 }

@@ -1,13 +1,14 @@
-﻿using AppForSEII2526.API.Controllers.ControllerPedirBocadillo;
+﻿using AppForSEII2526.API.Controllers.ControllerPedirBocadillo; 
 using AppForSEII2526.API.Controllers;
 using AppForSEII2526.API.Data;
-using AppForSEII2526.API.DTOs.DTOsPedirBocadillo;
+using AppForSEII2526.API.DTOs.DTOsPedirBocadillo; 
 using AppForSEII2526.API.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace AppForSEII2526.UT.BocadilloController_test
@@ -30,35 +31,55 @@ namespace AppForSEII2526.UT.BocadilloController_test
             _context.SaveChanges();
         }
 
+        public static IEnumerable<object[]> Datos_GetBocadillos_Success()
+        {
+        
+            var dto1 = new BocadilloSelectDTO { Id = 1, Nombre = "Bocata Normal Barra", Tamano = "Normal", Stock = 10, TipoPan = "Barra", Precio = 10.0m };
+            var dto2 = new BocadilloSelectDTO { Id = 2, Nombre = "Bocata Pequeño Bimbo", Tamano = "Pequeño", Stock = 10, TipoPan = "Bimbo", Precio = 15.0m };
+            var dto4 = new BocadilloSelectDTO { Id = 4, Nombre = "Bocata Normal Bimbo", Tamano = "Normal", Stock = 10, TipoPan = "Bimbo", Precio = 20.0m };
+
+            var listaTodos = new List<BocadilloSelectDTO> { dto1, dto2, dto4 };
+            var listaNormales = new List<BocadilloSelectDTO> { dto1, dto4 };
+            var listaPequeños = new List<BocadilloSelectDTO> { dto2 };
+            var listaBarra = new List<BocadilloSelectDTO> { dto1 };
+            var listaBimbo = new List<BocadilloSelectDTO> { dto2, dto4 };
+            var listaNormalYBimbo = new List<BocadilloSelectDTO> { dto4 };
+
+            yield return new object[] { null, null, listaTodos };       
+            yield return new object[] { "Normal", null, listaNormales }; 
+            yield return new object[] { "Pequeño", null, listaPequeños };
+            yield return new object[] { null, 1, listaBarra };          
+            yield return new object[] { null, 2, listaBimbo };          
+            yield return new object[] { "Normal", 2, listaNormalYBimbo };
+        }
+
         [Theory]
         [Trait("LevelTesting", "Unit Testing")]
-        [InlineData(null, null, 3)]    
-        [InlineData("Normal", null, 2)]  
-        [InlineData("Pequeño", null, 1)] 
-        [InlineData(null, 1, 1)]        
-        [InlineData(null, 2, 2)]        
-        [InlineData("Normal", 2, 1)]   
-        [InlineData("Pequeño", 1, 0)]   
-
-        public async Task GetBocadillosDisponibles_TodoBien_DevuelveResultadosCorrectos(
+        [MemberData(nameof(Datos_GetBocadillos_Success))] 
+        public async Task GetBocadillosDisponibles_ConResultados_DevuelveOk(
             string? tamano,
             int? tipoPanId,
-            int expectedCount)
+            List<BocadilloSelectDTO> expectedList)
         {
             var controller = new BocadilloSelectController(_context);
 
             var actionResult = await controller.GetBocadillosDisponibles(tamano, tipoPanId);
 
-            if (expectedCount > 0)
-            {
-                var okResult = Assert.IsType<OkObjectResult>(actionResult.Result);
-                var bocadillos = Assert.IsType<List<BocadilloSelectDTO>>(okResult.Value);
-                Assert.Equal(expectedCount, bocadillos.Count);
-            }
-            else
-            {
-                Assert.IsType<NotFoundObjectResult>(actionResult.Result);
-            }
+            var okResult = Assert.IsType<OkObjectResult>(actionResult.Result);
+            var actualList = Assert.IsType<List<BocadilloSelectDTO>>(okResult.Value);
+
+            Assert.Equal(expectedList, actualList);
+        }
+
+        [Theory]
+        [Trait("LevelTesting", "Unit Testing")]
+        [InlineData("Pequeño", 1)] 
+       
+        public async Task GetBocadillosDisponibles_SinResultados_DevuelveNotFound(string? tamano, int? tipoPanId)
+        {
+            var controller = new BocadilloSelectController(_context);
+            var actionResult = await controller.GetBocadillosDisponibles(tamano, tipoPanId);
+            Assert.IsType<NotFoundObjectResult>(actionResult.Result);
         }
 
         [Fact]
@@ -67,7 +88,6 @@ namespace AppForSEII2526.UT.BocadilloController_test
         {
             var controller = new BocadilloSelectController(_context);
             var filtroInvalido = "Grande"; 
-
             var actionResult = await controller.GetBocadillosDisponibles(filtroInvalido, null);
 
             var badRequestResult = Assert.IsType<BadRequestObjectResult>(actionResult.Result);

@@ -4,6 +4,9 @@ using AppForSEII2526.API.Data;
 using AppForSEII2526.API.Models;
 using System.Linq;
 using AppForSEII2526.API.DTOs.DTOsPedirBocadillo;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace AppForSEII2526.API.Controllers.ControllerPedirBocadillo
 {
@@ -18,19 +21,18 @@ namespace AppForSEII2526.API.Controllers.ControllerPedirBocadillo
             _context = context;
         }
 
-
         [HttpGet("{id}")]
         public async Task<ActionResult<PedidoBocadilloDetailsDTO>> GetPedido(int id)
         {
             try
             {
-                if (id != null && id <= 0)
+                if (id <= 0)
                 {
                     return NotFound(new { message = "Pedido no encontrado por id igual o menor que cero" });
                 }
 
                 var compra = await _context.Compra
-                    .Include(c => c.Cliente)
+                    .Include(c => c.Cliente) 
                     .Include(c => c.BocadillosComprados)
                         .ThenInclude(bc => bc.Bocadillo)
                             .ThenInclude(b => b.TipoPan)
@@ -41,21 +43,31 @@ namespace AppForSEII2526.API.Controllers.ControllerPedirBocadillo
                     return BadRequest(new { message = "Pedido no encontrado" });
                 }
 
-                var nombreCliente = "Cliente no especificado";
+                string nombre = "Desconocido";
+                string apellido1 = "";
+                string apellido2 = "";
+                string email = "";
+
                 if (compra.Cliente != null && compra.Cliente.Any())
                 {
                     var primerCliente = compra.Cliente.First();
-                    nombreCliente = $"{primerCliente.Nombre} {primerCliente.Apellido1} {primerCliente.Apellido2}";
+                    nombre = primerCliente.Nombre;
+                    apellido1 = primerCliente.Apellido1;
+                    apellido2 = primerCliente.Apellido2;
+                    email = primerCliente.Email;
                 }
 
                 var detalles = new PedidoBocadilloDetailsDTO
                 {
                     PedidoId = compra.CompraId,
-                    NombreCliente = nombreCliente.Trim(),
-                    FechaCompra = compra.FechaCompra,
+                    NombreCliente = nombre,
+                    Apellido1Cliente = apellido1,
+                    Apellido2Cliente = apellido2,
+                    EmailCliente = email,
                     MetodoPago = compra.MetodoPago.ToString(),
-                    PrecioTotal = (decimal)compra.PrecioTotal,
-
+                    FechaCompra = compra.FechaCompra,
+                    PrecioTotal = (decimal)compra.PrecioTotal, 
+                                                              
                     Bocadillos = compra.BocadillosComprados.Select(cb => new BocadilloItemDTO
                     {
                         BocadilloId = cb.BocadilloId,
@@ -74,23 +86,19 @@ namespace AppForSEII2526.API.Controllers.ControllerPedirBocadillo
             }
         }
 
-
         [HttpPost]
         public async Task<ActionResult> CrearPedido([FromBody] PedirBocadilloCreateDTO createDto)
         {
             try
             {
-                
                 if (!ModelState.IsValid)
                 {
                     return BadRequest(ModelState);
                 }
 
-                
                 var clienteLogueado = await _context.Users
                     .FirstOrDefaultAsync(u => u.Email == createDto.EmailCliente);
 
-                
                 if (clienteLogueado == null)
                 {
                     clienteLogueado = new ApplicationUser
@@ -99,12 +107,12 @@ namespace AppForSEII2526.API.Controllers.ControllerPedirBocadillo
                         Apellido1 = createDto.Apellido1Cliente,
                         Apellido2 = createDto.Apellido2Cliente,
                         Email = createDto.EmailCliente,
-                        UserName = createDto.EmailCliente, 
-                        EmailConfirmed = true 
+                        UserName = createDto.EmailCliente,
+                        EmailConfirmed = true
                     };
                     _context.Users.Add(clienteLogueado);
                 }
-               
+
                 var erroresStock = new List<string>();
                 decimal precioTotalCalculado = 0m;
                 var bocadillosComprados = new List<CompraBocadillo>();
@@ -125,9 +133,8 @@ namespace AppForSEII2526.API.Controllers.ControllerPedirBocadillo
                     else
                     {
                         precioTotalCalculado += bocadillo.PVP * itemDto.Cantidad;
-                        bocadillo.Stock -= itemDto.Cantidad; 
+                        bocadillo.Stock -= itemDto.Cantidad;
 
-                       
                         bocadillosComprados.Add(new CompraBocadillo
                         {
                             BocadilloId = bocadillo.Id,
@@ -141,14 +148,9 @@ namespace AppForSEII2526.API.Controllers.ControllerPedirBocadillo
                     return BadRequest(new { errors = erroresStock });
                 }
 
-             
                 var compra = new Compra
                 {
-                    
                     Cliente = new List<ApplicationUser> { clienteLogueado },
-
-                   
-    
                     FechaCompra = DateTime.Now,
                     nBocadillos = createDto.Bocadillos.Sum(b => b.Cantidad),
                     PrecioTotal = (float)precioTotalCalculado,
@@ -157,8 +159,6 @@ namespace AppForSEII2526.API.Controllers.ControllerPedirBocadillo
                 };
 
                 _context.Compra.Add(compra);
-
-              
                 await _context.SaveChangesAsync();
 
                 return CreatedAtAction(nameof(GetPedido), new { id = compra.CompraId }, new
@@ -169,7 +169,6 @@ namespace AppForSEII2526.API.Controllers.ControllerPedirBocadillo
             }
             catch (Exception ex)
             {
-                
                 return StatusCode(500, new { error = "Error al crear el pedido: " + ex.Message });
             }
         }
