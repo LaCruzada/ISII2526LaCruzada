@@ -97,7 +97,7 @@ namespace AppForSEII2526.UT.MerchandisingController_test
                 NombreCliente = "Test",
                 Apellido1Cliente = "Test",
                 Apellido2Cliente = "T",
-                DireccionEnvio = "Dirección Test",
+                DireccionEnvio = "Calle Test",
                 MetodoPago = "PayPal",
                 Productos = new List<ProductoCantidadDTO>
                 {
@@ -111,7 +111,7 @@ namespace AppForSEII2526.UT.MerchandisingController_test
                 NombreCliente = "Test",
                 Apellido1Cliente = "Test",
                 Apellido2Cliente = "T",
-                DireccionEnvio = "Dirección Test",
+                DireccionEnvio = "Calle Test",
                 MetodoPago = "PayPal",
                 Productos = new List<ProductoCantidadDTO>
                 {
@@ -125,7 +125,7 @@ namespace AppForSEII2526.UT.MerchandisingController_test
                 NombreCliente = "Test",
                 Apellido1Cliente = "Test",
                 Apellido2Cliente = "T",
-                DireccionEnvio = "Dirección Test",
+                DireccionEnvio = "Calle Test",
                 MetodoPago = "PayPal",
                 Productos = new List<ProductoCantidadDTO>()
             };
@@ -136,7 +136,21 @@ namespace AppForSEII2526.UT.MerchandisingController_test
                 NombreCliente = "Test",
                 Apellido1Cliente = "Test",
                 Apellido2Cliente = "T",
-                DireccionEnvio = "Dirección Test",
+                DireccionEnvio = "Calle Test",
+                MetodoPago = "PayPal",
+                Productos = new List<ProductoCantidadDTO>
+                {
+                    new ProductoCantidadDTO { ProductoId = PRODUCTO_ID_VALIDO, Cantidad = 1 }
+                }
+            };
+
+            var dtoCalleMal = new ComprarMerchandisingCreateDTO
+            {
+                EmailCliente = "test@test.com",
+                NombreCliente = "Test",
+                Apellido1Cliente = "Test",
+                Apellido2Cliente = "T",
+                DireccionEnvio = "Direccion Test",
                 MetodoPago = "PayPal",
                 Productos = new List<ProductoCantidadDTO>
                 {
@@ -149,7 +163,8 @@ namespace AppForSEII2526.UT.MerchandisingController_test
                 new object[] { dtoProductoNoExiste, $"Producto ID {ID_NO_EXISTENTE} no existe" },
                 new object[] { dtoSinStock, $"Stock insuficiente para {PRODUCTO_NOMBRE_POCO_STOCK}" },
                 new object[] { dtoCarritoVacio, "No se ha añadido ningún producto al carrito" },
-                new object[] { dtoSinEmail, "Todos los campos obligatorios deben rellenarse" }
+                new object[] { dtoSinEmail, "Todos los campos obligatorios deben rellenarse" },
+                new object[] { dtoCalleMal, "Error!, por favor introduce una direccion de envio valida" }
             };
         }
 
@@ -260,6 +275,7 @@ namespace AppForSEII2526.UT.MerchandisingController_test
             Assert.Equal(stockEsperado, productoDb.Stock);
         }
 
+        
         [Fact]
         [Trait("LevelTesting", "Unit Testing")]
         public async Task CrearCompra_ClienteExistente_NoCreaNuevoUsuario()
@@ -286,7 +302,7 @@ namespace AppForSEII2526.UT.MerchandisingController_test
                 NombreCliente = "OtroNombre",
                 Apellido1Cliente = "OtroApellido",
                 Apellido2Cliente = "OtroApellido2",
-                DireccionEnvio = "Nueva Dirección 456",
+                DireccionEnvio = "Calle 456",
                 MetodoPago = "GooglePay",
                 Productos = new List<ProductoCantidadDTO>
                 {
@@ -307,7 +323,7 @@ namespace AppForSEII2526.UT.MerchandisingController_test
 
             Assert.Equal(1, _context.Compra_Producto.Count());
             var compraDb = await _context.Compra_Producto.FirstOrDefaultAsync();
-            Assert.Equal("Nueva Dirección 456", compraDb.DireccionEnvio);
+            Assert.Equal("Calle 456", compraDb.DireccionEnvio);
             Assert.Equal("GooglePay", compraDb.Metodo_Pago);
         }
     }
