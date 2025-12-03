@@ -1,0 +1,242 @@
+﻿@page "/bonos/seleccionar"
+@using AppForSEII2526.API.ComprarBonoBocadilloDTOs
+@using AppForSEII2526.API.DTOs.CompraBonoDTOs
+@using AppForSEII2526.Web.Services
+@using AppForSEII2526.Web.Components
+
+@inject ILogger<SeleccionarBonosBocadillos> logger
+@inject ComprarBonoStateContainer bonoState
+@inject NavigationManager navigation
+
+
+<h3>Seleccionar Bonos de Bocadillos</h3>
+<div class="container-fluid">
+    <div class="row">
+        <div class="d-flex justify-content-between">
+            <div><b>Bonos Seleccionados:</b> @compra.BonoItem.Count</div>
+            <div><b>Precio Total:</b> @compra.PrecioTotal.ToString("F2") €</div>
+            <button class="btn btn-primary" id="ComprarBonos" @onclick="@ComprarBonos" disabled="@CompraButtonDisabled">Comprar bonos</button>
+        </div>
+    </div>
+
+    <div class="row">
+        <button class="btn btn-outline-primary" id="showCarrito" @onclick="@ToggleCarrito">Carrito: @compra.PrecioTotal.ToString("F2") €</button>
+    </div>
+
+    <div class="row" hidden="@hiddenCarrito">
+        @foreach (var item in compra.BonoItem)
+        {
+            <div class="card m-2" style="width: 18rem;">
+                <div class="card-body">
+                    <h5 class="card-title">@item.Nombre</h5>
+                    <p class="card-text">
+                        <strong>Tipo:</strong> @item.Tipo<br />
+                        <strong>Cantidad:</strong> @item.Cantidad<br />
+                        <strong>Precio Unitario:</strong> @item.PrecioUnitario.ToString("F2") €<br />
+                        <strong>Subtotal:</strong> @((item.PrecioUnitario * item.Cantidad).ToString("F2")) €
+                    </p>
+                    <button class="btn btn-danger btn-sm" @onclick="@(() => RemoveBonoItem(item))">Eliminar</button>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="row">
+        <p></p>
+        <h5>Filtrar Bonos</h5>
+        <div class="input-group">
+            <div class="input-group-prepend">
+                <span class="input-group-text">Nombre</span>
+            </div>
+            <input type="text" class="form-control" @bind="bonoNombre" id="bonoNombre">
+            <div class="input-group-prepend">
+                <span class="input-group-text">Tipo</span>
+            </div>
+            <select class="form-select" aria-label="Default select" @bind="tipoSelected" id="selectTipo">
+                <option value="All" selected>Todos</option>
+                @foreach (string tipoNombre in tiposNombres)
+                {
+                    <option value="@tipoNombre" id="tipoNameSelected_@tipoNombre">@tipoNombre</option>
+                }
+            </select>
+            <div class="input-group-append">
+                <button class="btn btn-outline-primary" id="searchBonos" @onclick="@BuscarBonos">Buscar bonos disponibles</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between">
+        <div class="container-fluid">
+            @if (Bonos.Count() == 0)
+            {
+                <p><em>No hay bonos disponibles</em></p>
+            }
+            else
+            {
+                <div class="mh-100 table-responsive">
+                    <table class="table table-condensed table-hover" id="TableOfBonos">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Tipo</th>
+                                <th>Nº Bocadillos</th>
+                                <th>Precio</th>
+                                <th>Stock</th>
+                                <th>Añadir</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var bono in Bonos)
+                            {
+                                <tr id="BonoData_@bono.BonoId">
+                                    <td>@bono.Nombre</td>
+                                    <td>@bono.TipoBocadillo</td>
+                                    <td>@bono.NBocadillos</td>
+                                    <td>@bono.PVP.ToString("F2") €</td>
+                                    <td>@bono.CantidadDisponible</td>
+                                    <td>
+                                        <button class="btn btn-outline-secondary" id="bonoToAdd_@bono.BonoId" @onclick="@(()=>AddBono(bono))" disabled="@(bono.CantidadDisponible == 0)">Añadir</button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@if (DialogOKIsOpen)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <strong>Error!</strong> @DialogOKMessage
+        <button type="button" class="btn-close" @onclick="OnDialogOKClose" aria-label="Close"></button>
+    </div>
+}
+    
+@code {
+    private bool DialogOKIsOpen;
+    private string DialogOKMessage = string.Empty;
+    private void OpenDialogOK(string message)
+    {
+        DialogOKIsOpen = true;
+        DialogOKMessage = message;
+    }
+    private async Task OnDialogOKClose()
+    {
+        DialogOKIsOpen = false;
+    }
+
+    private bool hiddenCarrito = true;
+    private void ToggleCarrito()
+    {
+        hiddenCarrito = !hiddenCarrito;
+    }
+
+    private ICollection<BonoSelectDTO>? Bonos { get; set; } = new List<BonoSelectDTO>();
+    private List<BonoSelectDTO> TodosLosBonos { get; set; } = new List<BonoSelectDTO>();
+
+    private string bonoNombre = string.Empty;
+    private string tipoFiltro = string.Empty;
+
+    private string error = string.Empty;
+    private ComprarBonoBocadilloPost compra => bonoState.Compra;
+    private bool CompraButtonDisabled { get { return compra.BonoItem.Count == 0; } }
+
+    private ICollection<string>? tiposNombres = new List<string>();
+    private string tipoSelected = "All";
+
+    private void AddBono(BonoSelectDTO bono)
+    {
+        bonoState.AgregarBono(bono);
+    }
+
+    private void RemoveBonoItem(BonosCompradosDTO item)
+    {
+        var bonoSelect = new BonoSelectDTO
+        {
+            BonoId = item.BonoID,
+            Nombre = item.Nombre,
+            PVP = item.PrecioUnitario,
+            TipoBocadillo = item.Tipo
+        };
+        bonoState.EliminarBono(bonoSelect);
+        if (compra.BonoItem.Count == 0) hiddenCarrito = true;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            tiposNombres = new List<string> { "Normal", "Sin gluten", "Vegano" };
+        }
+        catch (Exception ex)
+        {
+            tiposNombres = new List<string>();
+            logger.LogError("Error! Hubo un error al conectar con el servicio de tipos");
+        }
+
+        try
+        {
+            
+            TodosLosBonos = new List<BonoSelectDTO>
+            {
+                new BonoSelectDTO { BonoId = 1, Nombre = "Bono Completo", PVP = 15.0, NBocadillos = 5, TipoBocadillo = "Normal", CantidadDisponible = 10 },
+                new BonoSelectDTO { BonoId = 2, Nombre = "Bono Pequeño", PVP = 10.0, NBocadillos = 2, TipoBocadillo = "Sin gluten", CantidadDisponible = 2 },
+                new BonoSelectDTO { BonoId = 3, Nombre = "Bono Grande", PVP = 18.0, NBocadillos = 5, TipoBocadillo = "Vegano", CantidadDisponible = 7 }
+            };
+        }
+        catch (Exception ex)
+        {
+            TodosLosBonos = new List<BonoSelectDTO>();
+            logger.LogError(ex, "Error al cargar bonos disponibles");
+            OpenDialogOK("Error al cargar los bonos disponibles");
+        }
+
+        // Mostrar todos los bonos al inicio (sin filtro)
+        AplicarFiltros();
+    }
+
+    private void BuscarBonos()
+    {
+        AplicarFiltros();
+    }
+
+    private void AplicarFiltros()
+    {
+        tipoFiltro = tipoSelected == "All" ? string.Empty : tipoSelected;
+
+        try
+        {
+            var bonosFiltrados = TodosLosBonos.AsEnumerable();
+
+            // Filtrar por nombre (case-insensitive, contains)
+            if (!string.IsNullOrWhiteSpace(bonoNombre))
+            {
+                bonosFiltrados = bonosFiltrados.Where(b =>
+                    b.Nombre.Contains(bonoNombre, StringComparison.OrdinalIgnoreCase));
+            }
+
+            // Filtrar por tipo
+            if (!string.IsNullOrWhiteSpace(tipoFiltro))
+            {
+                bonosFiltrados = bonosFiltrados.Where(b =>
+                    b.TipoBocadillo.Equals(tipoFiltro, StringComparison.OrdinalIgnoreCase));
+            }
+
+            Bonos = bonosFiltrados.ToList();
+        }
+        catch (Exception ex)
+        {
+            Bonos = new List<BonoSelectDTO>();
+            logger.LogError(ex, "Error al filtrar bonos");
+            OpenDialogOK("Hubo un error al filtrar los bonos");
+        }
+    }
+
+    private void ComprarBonos()
+    {
+        navigation.NavigateTo("/bonos/Detallecompra");
+    }
+}

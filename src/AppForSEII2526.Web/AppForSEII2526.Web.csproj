@@ -8,6 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Remove="Components\Pages\BonosBocadillos\Component.razor" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="OpenAPIs\swagger.json" ClassName="AppForSEII2526APIClient" />
     <None Include="OpenAPIs\swagger1.json" ClassName="AppForSEII2526APICLIENT" />
   </ItemGroup>
