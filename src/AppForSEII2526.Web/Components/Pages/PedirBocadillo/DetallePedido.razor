@@ -1,0 +1,142 @@
+﻿@page "/PedirBocadillo/DetallePedido"
+
+@using AppForSEII2526.API.DTOs.DTOsPedirBocadillo
+@inject NavigationManager NavManager
+
+<h3>Detalles del Pedido</h3>
+
+<div class="container-fluid">
+
+    @if (!string.IsNullOrEmpty(error))
+    {
+        <div class="alert alert-danger">@error</div>
+    }
+    else if (pedido == null)
+    {
+        <p><em>Cargando detalles...</em></p>
+    }
+    else
+    {
+        <div class="card mb-4">
+            <div class="card-header bg-light">Información General</div>
+            <div class="card-body">
+                <table class="table table-borderless table-sm">
+                    <tr>
+                        <th style="width: 200px;">Nº Pedido:</th>
+                        <td>#@pedido.PedidoId</td>
+                    </tr>
+                    <tr>
+                        <th>Cliente:</th>
+                        <td>@pedido.NombreCliente</td>
+                    </tr>
+                    <tr>
+                        <th>Fecha Compra:</th>
+                        <td>@pedido.FechaCompra.ToString("dd/MM/yyyy HH:mm")</td>
+                    </tr>
+                    <tr>
+                        <th>Método Pago:</th>
+                        <td>@pedido.MetodoPago</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <h4>Bocadillos Comprados</h4>
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Bocadillo</th>
+                        <th>Pan</th>
+                        <th>Precio Unit.</th>
+                        <th>Cantidad</th>
+                        <th class="text-end">Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in pedido.Bocadillos)
+                    {
+                        <tr>
+                            <td>@item.NombreBocadillo</td>
+                            <td>@item.TipoPan</td>
+                            <td>@item.PrecioUnitario.ToString("C")</td>
+                            <td>@item.Cantidad</td>
+                            <td class="text-end">
+                                @((item.PrecioUnitario * item.Cantidad).ToString("C"))
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr class="fw-bold fs-5">
+                        <td colspan="4" class="text-end">Precio Total:</td>
+                        <td class="text-end text-primary">@pedido.PrecioTotal.ToString("C")</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <div class="mt-3">
+            <button class="btn btn-secondary" @onclick="Volver">Volver al Listado</button>
+        </div>
+    }
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    public int Id { get; set; }
+
+    private PedidoBocadilloDetailsDTO? pedido;
+    private string error = "";
+
+    protected override void OnInitialized()
+    {
+        if (Id <= 0)
+        {
+            error = "Error: No se ha especificado un pedido válido.";
+            return;
+        }
+
+        try
+        {
+            pedido = new PedidoBocadilloDetailsDTO
+            {
+                PedidoId = Id,
+                NombreCliente = "Juan Pérez García",
+                FechaCompra = DateTime.Now.AddHours(-2),
+                MetodoPago = "Tarjeta",
+
+                Bocadillos = new List<BocadilloItemDTO>
+                {
+                    new BocadilloItemDTO
+                    {
+                        BocadilloId = 1,
+                        NombreBocadillo = "Bocadillo de Lomo",
+                        TipoPan = "Barra",
+                        Cantidad = 2,
+                        PrecioUnitario = 6.50m
+                    },
+                    new BocadilloItemDTO
+                    {
+                        BocadilloId = 2,
+                        NombreBocadillo = "Vegetal",
+                        TipoPan = "Integral",
+                        Cantidad = 1,
+                        PrecioUnitario = 4.00m
+                    }
+                }
+            };
+
+            pedido.PrecioTotal = pedido.Bocadillos.Sum(b => b.PrecioUnitario * b.Cantidad);
+        }
+        catch (Exception ex)
+        {
+            error = "Ocurrió un error al cargar el pedido.";
+        }
+    }
+
+    private void Volver()
+    {
+        NavManager.NavigateTo("/PedirBocadillo/SelectPedirBocadillo");
+    }
+}
