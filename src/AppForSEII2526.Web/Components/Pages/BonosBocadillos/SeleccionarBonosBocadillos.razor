@@ -3,6 +3,7 @@
 @using AppForSEII2526.API.DTOs.CompraBonoDTOs
 @using AppForSEII2526.Web.Services
 @using AppForSEII2526.Web.Components
+@implements IDisposable
 
 @inject ILogger<SeleccionarBonosBocadillos> logger
 @inject ComprarBonoStateContainer bonoState
@@ -88,6 +89,9 @@
                         <tbody>
                             @foreach (var bono in Bonos)
                             {
+                                var cantidadEnCarrito = CantidadEnCarrito(bono.BonoId);
+                                var botonDeshabilitado = bono.CantidadDisponible == 0 || cantidadEnCarrito >= bono.CantidadDisponible;
+                                
                                 <tr id="BonoData_@bono.BonoId">
                                     <td>@bono.Nombre</td>
                                     <td>@bono.TipoBocadillo</td>
@@ -95,7 +99,14 @@
                                     <td>@bono.PVP.ToString("F2") €</td>
                                     <td>@bono.CantidadDisponible</td>
                                     <td>
-                                        <button class="btn btn-outline-secondary" id="bonoToAdd_@bono.BonoId" @onclick="@(()=>AddBono(bono))" disabled="@(bono.CantidadDisponible == 0)">Añadir</button>
+                                        <button class="btn btn-outline-secondary" id="bonoToAdd_@bono.BonoId" @onclick="@(()=>AddBono(bono))"
+                                            disabled="@botonDeshabilitado">
+                                            Añadir
+                                        </button>
+                                        @if (cantidadEnCarrito > 0)
+                                        {
+                                            <small class="text-muted d-block">(@cantidadEnCarrito en carrito)</small>
+                                        }
                                     </td>
                                 </tr>
                             }
@@ -147,21 +158,32 @@
     private ICollection<string>? tiposNombres = new List<string>();
     private string tipoSelected = "All";
 
+    protected override void OnInitialized()
+    {
+        // Suscribirse a cambios del state container para actualizar la UI automáticamente
+        bonoState.OnChange += StateHasChanged;
+    }
+
     private void AddBono(BonoSelectDTO bono)
     {
+        var cantidadActual = CantidadEnCarrito(bono.BonoId);
+        if (cantidadActual >= bono.CantidadDisponible)
+        {
+            OpenDialogOK($"No puedes añadir más unidades de '{bono.Nombre}'. Stock máximo: {bono.CantidadDisponible}");
+            return;
+        }
+
         bonoState.AgregarBono(bono);
     }
 
     private void RemoveBonoItem(BonosCompradosDTO item)
     {
-        var bonoSelect = new BonoSelectDTO
+        var bonoSelect = TodosLosBonos.FirstOrDefault(b => b.BonoId == item.BonoID);
+        if (bonoSelect != null)
         {
-            BonoId = item.BonoID,
-            Nombre = item.Nombre,
-            PVP = item.PrecioUnitario,
-            TipoBocadillo = item.Tipo
-        };
-        bonoState.EliminarBono(bonoSelect);
+            bonoState.EliminarBono(bonoSelect);
+        }
+        
         if (compra.BonoItem.Count == 0) hiddenCarrito = true;
     }
 
@@ -179,6 +201,8 @@
 
         try
         {
+            // TODO: Reemplazar con llamada a API cuando esté lista
+            // TodosLosBonos = await apiClient.GetBonosAsync();
             
             TodosLosBonos = new List<BonoSelectDTO>
             {
@@ -238,5 +262,17 @@
     private void ComprarBonos()
     {
         navigation.NavigateTo("/bonos/Detallecompra");
+    }
+
+    // Devuelve la cantidad ya presente en el carrito para ese bono
+    private int CantidadEnCarrito(int bonoId)
+    {
+        return compra?.BonoItem.FirstOrDefault(b => b.BonoID == bonoId)?.Cantidad ?? 0;
+    }
+
+    public void Dispose()
+    {
+        // Desuscribirse para evitar memory leaks
+        bonoState.OnChange -= StateHasChanged;
     }
 }

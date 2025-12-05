@@ -28,24 +28,48 @@ namespace AppForSEII2526.Web.Services
 
         public void AgregarBono(BonoSelectDTO bonoSeleccionado)
         {
-            CarritoVisual.Add(bonoSeleccionado);
+            if (bonoSeleccionado == null) return;
 
             var itemExistente = Compra.BonoItem.FirstOrDefault(b => b.BonoID == bonoSeleccionado.BonoId);
 
+            // Si ya existe, sólo incrementar si no se ha alcanzado el stock disponible
             if (itemExistente != null)
             {
-                itemExistente.Cantidad++;
+                if (itemExistente.Cantidad < bonoSeleccionado.CantidadDisponible)
+                {
+                    itemExistente.Cantidad++;
+                }
+                else
+                {
+                    // No hay más unidades disponibles; no hacemos nada
+                    return;
+                }
             }
             else
             {
-                Compra.BonoItem.Add(new BonosCompradosDTO
+                // Nuevo item: sólo añadir si hay stock
+                if (bonoSeleccionado.CantidadDisponible > 0)
                 {
-                    BonoID = bonoSeleccionado.BonoId,
-                    Nombre = bonoSeleccionado.Nombre,
-                    PrecioUnitario = bonoSeleccionado.PVP,
-                    Cantidad = 1,
-                    Tipo = bonoSeleccionado.TipoBocadillo
-                });
+                    Compra.BonoItem.Add(new BonosCompradosDTO
+                    {
+                        BonoID = bonoSeleccionado.BonoId,
+                        Nombre = bonoSeleccionado.Nombre,
+                        PrecioUnitario = bonoSeleccionado.PVP,
+                        Cantidad = 1,
+                        Tipo = bonoSeleccionado.TipoBocadillo
+                    });
+
+                    // Añadir a la representación visual si no existe ya
+                    if (!CarritoVisual.Any(b => b.BonoId == bonoSeleccionado.BonoId))
+                    {
+                        CarritoVisual.Add(bonoSeleccionado);
+                    }
+                }
+                else
+                {
+                    // Sin stock, nada que hacer
+                    return;
+                }
             }
 
             NotifyStateChanged();
@@ -53,7 +77,7 @@ namespace AppForSEII2526.Web.Services
 
         public void EliminarBono(BonoSelectDTO bonoSeleccionado)
         {
-            CarritoVisual.Remove(bonoSeleccionado);
+            if (bonoSeleccionado == null) return;
 
             var itemExistente = Compra.BonoItem.FirstOrDefault(b => b.BonoID == bonoSeleccionado.BonoId);
 
@@ -63,6 +87,8 @@ namespace AppForSEII2526.Web.Services
                 if (itemExistente.Cantidad <= 0)
                 {
                     Compra.BonoItem.Remove(itemExistente);
+                    var visual = CarritoVisual.FirstOrDefault(b => b.BonoId == bonoSeleccionado.BonoId);
+                    if (visual != null) CarritoVisual.Remove(visual);
                 }
             }
 
@@ -91,7 +117,19 @@ namespace AppForSEII2526.Web.Services
 
             NotifyStateChanged();
         }
+
+        public void ActualizarMetodoPago(MetodoPago metodoPago)
+        {
+            Compra.pago = metodoPago;
+            NotifyStateChanged();
+        }
+
+        public void ActualizarDatosCliente(string nombre, string apellido1, string apellido2)
+        {
+            Compra.NombreCliente = nombre;
+            Compra.ApellidoCliente1 = apellido1;
+            Compra.ApellidoCliente2 = apellido2;
+            NotifyStateChanged();
+        }
     }
-
-
 }
