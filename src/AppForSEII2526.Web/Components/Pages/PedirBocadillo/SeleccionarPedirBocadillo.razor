@@ -1,0 +1,178 @@
+﻿@page "/PedirBocadillo/SeleccionarPedirBocadillo"
+
+@using AppForSEII2526.API.DTOs.DTOsPedirBocadillo
+@using AppForSEII2526.Web.Services
+
+@inject ILogger<SeleccionarPedirBocadillo> Logger
+@inject PedirBocadilloStateContainer StateContainer
+@inject NavigationManager NavManager
+
+<h3>Seleccionar Bocadillos</h3>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-8">
+
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-4">
+                            <label class="form-label">Tamaño:</label>
+                            <select class="form-select" @bind="filtroTamano">
+                                <option value="All">Todos</option>
+                                <option value="Normal">Normal</option>
+                                <option value="Pequeño">Pequeño</option>
+                                <option value="Grande">Grande</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Nombre (Buscar):</label>
+                            <input type="text" class="form-control" @bind="filtroNombre" placeholder="Ej: Vegetal" />
+                        </div>
+                        <div class="col-md-4">
+                            <button class="btn btn-primary w-100" @onclick="AplicarFiltros">
+                                Buscar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Pan</th>
+                            <th>Tamaño</th>
+                            <th>Precio</th>
+                            <th>Stock</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var bocata in BocadillosMostrados)
+                        {
+                            <tr>
+                                <td>@bocata.Nombre</td>
+                                <td>@bocata.TipoPan</td>
+                                <td>@bocata.Tamano</td>
+                                <td>@bocata.Precio.ToString("0.00") €</td>
+                                <td>@bocata.Stock</td>
+                                <td>
+                                    <button class="btn btn-outline-success btn-sm"
+                                            @onclick="@(() => AddBocadillo(bocata))"
+                                            disabled="@(bocata.Stock <= 0)">
+                                        Añadir
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                @if (!BocadillosMostrados.Any())
+                {
+                    <div class="alert alert-warning">No hay bocadillos que coincidan.</div>
+                }
+            </div>
+        </div>
+
+        <div class="col-4">
+            <div class="card border-primary">
+                <div class="card-header bg-primary text-white">
+                    Cesta (@StateContainer.Pedido.Bocadillos.Count)
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        @foreach (var item in StateContainer.CarritoVisual)
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>@item.Nombre</strong><br />
+                                    <small>@item.Tamano</small>
+                                </div>
+                                <span>@item.Precio €</span>
+                                <button class="btn btn-danger btn-sm ms-2" @onclick="() => RemoveBocadilloItem(item)">X</button>
+                            </li>
+                        }
+                        @if (!StateContainer.CarritoVisual.Any())
+                        {
+                            <li class="list-group-item text-center text-muted">Vacío</li>
+                        }
+                    </ul>
+                </div>
+                <div class="card-footer">
+                    <h5>Total: @StateContainer.PrecioTotal.ToString("0.00") €</h5>
+                    <button class="btn btn-warning w-100" @onclick="ComprarBocadillos" disabled="@(!StateContainer.CarritoVisual.Any())">
+                        Tramitar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<BocadilloSelectDTO> TodosLosBocadillos = new List<BocadilloSelectDTO>();
+    private List<BocadilloSelectDTO> BocadillosMostrados = new List<BocadilloSelectDTO>();
+    private string filtroTamano = "All";
+    private string filtroNombre = "";
+
+    protected override void OnInitialized()
+    {
+        StateContainer.OnChange += StateHasChanged;
+
+        try
+        {
+            TodosLosBocadillos = new List<BocadilloSelectDTO>
+            {
+                new BocadilloSelectDTO { Id = 1, Nombre = "Bocadillo de Tortilla", Precio = 3.50m, TipoPan = "Barra", Tamano = "Normal", Stock = 10 },
+                new BocadilloSelectDTO { Id = 2, Nombre = "Bocadillo Vegetal", Precio = 4.00m, TipoPan = "Integral", Tamano = "Grande", Stock = 5 },
+                new BocadilloSelectDTO { Id = 3, Nombre = "Bocadillo de Jamón", Precio = 5.50m, TipoPan = "Barra", Tamano = "Pequeño", Stock = 0 }, 
+                new BocadilloSelectDTO { Id = 4, Nombre = "Serranito", Precio = 6.00m, TipoPan = "Viena", Tamano = "Normal", Stock = 8 }
+            };
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError("Error cargando datos mock: " + ex.Message);
+        }
+        AplicarFiltros();
+    }
+
+    private void AplicarFiltros()
+    {
+        var resultado = TodosLosBocadillos.AsEnumerable();
+
+        if (filtroTamano != "All")
+        {
+            resultado = resultado.Where(b => b.Tamano.Equals(filtroTamano, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (!string.IsNullOrWhiteSpace(filtroNombre))
+        {
+            resultado = resultado.Where(b => b.Nombre.Contains(filtroNombre, StringComparison.OrdinalIgnoreCase));
+        }
+
+        BocadillosMostrados = resultado.ToList();
+    }
+
+    private void AddBocadillo(BocadilloSelectDTO bocata)
+    {
+        StateContainer.AgregarBocadillo(bocata);
+    }
+
+    private void RemoveBocadilloItem(BocadilloSelectDTO item)
+    {
+        StateContainer.EliminarBocadillo(item);
+    }
+
+    public void Dispose()
+    {
+        StateContainer.OnChange -= StateHasChanged;
+    }
+
+    private void ComprarBocadillos()
+    {
+        NavManager.NavigateTo("/PedirBocadillo/Create");
+    }
+}
