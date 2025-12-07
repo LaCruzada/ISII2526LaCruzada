@@ -1,6 +1,5 @@
 ﻿using AppForSEII2526.API.ComprarBonoBocadilloDTOs;
-using AppForSEII2526.API.ComprarBonoBocadilloDTOs;
-using AppForSEII2526.API.DTOs.CompraBonoDTOs;
+
 using AppForSEII2526.API.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;

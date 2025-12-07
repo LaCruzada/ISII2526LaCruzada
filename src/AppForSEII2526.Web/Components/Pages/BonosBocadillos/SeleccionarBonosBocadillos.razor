@@ -1,6 +1,5 @@
 ﻿@page "/bonos/seleccionar"
-@using AppForSEII2526.API.ComprarBonoBocadilloDTOs
-@using AppForSEII2526.API.DTOs.CompraBonoDTOs
+@using AppForSEII2526.Web.API
 @using AppForSEII2526.Web.Services
 @using AppForSEII2526.Web.Components
 @implements IDisposable
@@ -15,13 +14,12 @@
     <div class="row">
         <div class="d-flex justify-content-between">
             <div><b>Bonos Seleccionados:</b> @compra.BonoItem.Count</div>
-            <div><b>Precio Total:</b> @compra.PrecioTotal.ToString("F2") €</div>
             <button class="btn btn-primary" id="ComprarBonos" @onclick="@ComprarBonos" disabled="@CompraButtonDisabled">Comprar bonos</button>
         </div>
     </div>
 
     <div class="row">
-        <button class="btn btn-outline-primary" id="showCarrito" @onclick="@ToggleCarrito">Carrito: @compra.PrecioTotal.ToString("F2") €</button>
+        <button class="btn btn-outline-primary" id="showCarrito" @onclick="@ToggleCarrito">@(hiddenCarrito ? "Mostrar" : "Ocultar") Carrito</button>
     </div>
 
     <div class="row" hidden="@hiddenCarrito">
@@ -145,8 +143,8 @@
         hiddenCarrito = !hiddenCarrito;
     }
 
-    private ICollection<BonoSelectDTO>? Bonos { get; set; } = new List<BonoSelectDTO>();
-    private List<BonoSelectDTO> TodosLosBonos { get; set; } = new List<BonoSelectDTO>();
+    private ICollection<AppForSEII2526.API.ComprarBonoBocadilloDTOs.BonoSelectDTO>? Bonos { get; set; } = new List<AppForSEII2526.API.ComprarBonoBocadilloDTOs.BonoSelectDTO>();
+    private List<AppForSEII2526.API.ComprarBonoBocadilloDTOs.BonoSelectDTO> TodosLosBonos { get; set; } = new List<AppForSEII2526.API.ComprarBonoBocadilloDTOs.BonoSelectDTO>();
 
     private string bonoNombre = string.Empty;
     private string tipoFiltro = string.Empty;
@@ -164,7 +162,7 @@
         bonoState.OnChange += StateHasChanged;
     }
 
-    private void AddBono(BonoSelectDTO bono)
+    private void AddBono(AppForSEII2526.API.ComprarBonoBocadilloDTOs.BonoSelectDTO bono)
     {
         var cantidadActual = CantidadEnCarrito(bono.BonoId);
         if (cantidadActual >= bono.CantidadDisponible)
@@ -204,16 +202,16 @@
             // TODO: Reemplazar con llamada a API cuando esté lista
             // TodosLosBonos = await apiClient.GetBonosAsync();
             
-            TodosLosBonos = new List<BonoSelectDTO>
+            TodosLosBonos = new List<AppForSEII2526.API.ComprarBonoBocadilloDTOs.BonoSelectDTO>
             {
-                new BonoSelectDTO { BonoId = 1, Nombre = "Bono Completo", PVP = 15.0, NBocadillos = 5, TipoBocadillo = "Normal", CantidadDisponible = 10 },
-                new BonoSelectDTO { BonoId = 2, Nombre = "Bono Pequeño", PVP = 10.0, NBocadillos = 2, TipoBocadillo = "Sin gluten", CantidadDisponible = 2 },
-                new BonoSelectDTO { BonoId = 3, Nombre = "Bono Grande", PVP = 18.0, NBocadillos = 5, TipoBocadillo = "Vegano", CantidadDisponible = 7 }
+                new AppForSEII2526.API.ComprarBonoBocadilloDTOs.BonoSelectDTO { BonoId = 1, Nombre = "Bono Completo", PVP = 15.0, NBocadillos = 5, TipoBocadillo = "Normal", CantidadDisponible = 10 },
+                new AppForSEII2526.API.ComprarBonoBocadilloDTOs.BonoSelectDTO { BonoId = 2, Nombre = "Bono Pequeño", PVP = 10.0, NBocadillos = 2, TipoBocadillo = "Sin gluten", CantidadDisponible = 2 },
+                new AppForSEII2526.API.ComprarBonoBocadilloDTOs.BonoSelectDTO { BonoId = 3, Nombre = "Bono Grande", PVP = 18.0, NBocadillos = 5, TipoBocadillo = "Vegano", CantidadDisponible = 7 }
             };
         }
         catch (Exception ex)
         {
-            TodosLosBonos = new List<BonoSelectDTO>();
+            TodosLosBonos = new List<AppForSEII2526.API.ComprarBonoBocadilloDTOs.BonoSelectDTO>();
             logger.LogError(ex, "Error al cargar bonos disponibles");
             OpenDialogOK("Error al cargar los bonos disponibles");
         }
@@ -253,7 +251,7 @@
         }
         catch (Exception ex)
         {
-            Bonos = new List<BonoSelectDTO>();
+            Bonos = new List<AppForSEII2526.API.ComprarBonoBocadilloDTOs.BonoSelectDTO>();
             logger.LogError(ex, "Error al filtrar bonos");
             OpenDialogOK("Hubo un error al filtrar los bonos");
         }
@@ -261,7 +259,7 @@
 
     private void ComprarBonos()
     {
-        navigation.NavigateTo("/bonos/Detallecompra");
+        navigation.NavigateTo("/bonos/PostBonoBocadillo");
     }
 
     // Devuelve la cantidad ya presente en el carrito para ese bono

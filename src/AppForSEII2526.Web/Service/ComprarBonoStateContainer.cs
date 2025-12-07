@@ -1,6 +1,5 @@
-﻿using AppForSEII2526.API.ComprarBonoBocadilloDTOs;
-using AppForSEII2526.API.DTOs.CompraBonoDTOs;
-using AppForSEII2526.API.Models;
+﻿
+using AppForSEII2526.Web.API;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,19 +13,17 @@ namespace AppForSEII2526.Web.Services
             NombreCliente = "",
             ApellidoCliente1 = "",
             ApellidoCliente2 = "",
-            pago = MetodoPago.Tarjeta,
+            Pago = MetodoPago.Tarjeta,
             FechaCompra = DateTime.Now,
             BonoItem = new List<BonosCompradosDTO>()
         };
 
-        public List<BonoSelectDTO> CarritoVisual { get; private set; } = new List<BonoSelectDTO>();
-
         public double PrecioTotal => Compra.PrecioTotal;
 
-        public event Action? OnChange;
+        public event Action? OnChange;      
         private void NotifyStateChanged() => OnChange?.Invoke();
 
-        public void AgregarBono(BonoSelectDTO bonoSeleccionado)
+        public void AgregarBono(AppForSEII2526.API.ComprarBonoBocadilloDTOs.BonoSelectDTO bonoSeleccionado)
         {
             if (bonoSeleccionado == null) return;
 
@@ -38,11 +35,7 @@ namespace AppForSEII2526.Web.Services
                 if (itemExistente.Cantidad < bonoSeleccionado.CantidadDisponible)
                 {
                     itemExistente.Cantidad++;
-                }
-                else
-                {
-                    // No hay más unidades disponibles; no hacemos nada
-                    return;
+                    NotifyStateChanged();
                 }
             }
             else
@@ -58,24 +51,12 @@ namespace AppForSEII2526.Web.Services
                         Cantidad = 1,
                         Tipo = bonoSeleccionado.TipoBocadillo
                     });
-
-                    // Añadir a la representación visual si no existe ya
-                    if (!CarritoVisual.Any(b => b.BonoId == bonoSeleccionado.BonoId))
-                    {
-                        CarritoVisual.Add(bonoSeleccionado);
-                    }
-                }
-                else
-                {
-                    // Sin stock, nada que hacer
-                    return;
+                    NotifyStateChanged();
                 }
             }
-
-            NotifyStateChanged();
         }
 
-        public void EliminarBono(BonoSelectDTO bonoSeleccionado)
+        public void EliminarBono(AppForSEII2526.API.ComprarBonoBocadilloDTOs.BonoSelectDTO bonoSeleccionado)
         {
             if (bonoSeleccionado == null) return;
 
@@ -87,18 +68,14 @@ namespace AppForSEII2526.Web.Services
                 if (itemExistente.Cantidad <= 0)
                 {
                     Compra.BonoItem.Remove(itemExistente);
-                    var visual = CarritoVisual.FirstOrDefault(b => b.BonoId == bonoSeleccionado.BonoId);
-                    if (visual != null) CarritoVisual.Remove(visual);
                 }
+                NotifyStateChanged();
             }
-
-            NotifyStateChanged();
         }
 
         public void LimpiarCarrito()
         {
             Compra.BonoItem.Clear();
-            CarritoVisual.Clear();
             NotifyStateChanged();
         }
 
@@ -109,18 +86,16 @@ namespace AppForSEII2526.Web.Services
                 NombreCliente = "",
                 ApellidoCliente1 = "",
                 ApellidoCliente2 = "",
-                pago = MetodoPago.Tarjeta,
+                Pago = MetodoPago.Tarjeta,
                 FechaCompra = DateTime.Now,
                 BonoItem = new List<BonosCompradosDTO>()
             };
-            CarritoVisual = new List<BonoSelectDTO>();
-
             NotifyStateChanged();
         }
 
         public void ActualizarMetodoPago(MetodoPago metodoPago)
         {
-            Compra.pago = metodoPago;
+            Compra.Pago = metodoPago;
             NotifyStateChanged();
         }
 
