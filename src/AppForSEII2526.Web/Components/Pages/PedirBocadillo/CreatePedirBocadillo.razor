@@ -1,0 +1,148 @@
+﻿@page "/PedirBocadillo/Create"
+
+@using AppForSEII2526.API.DTOs.DTOsPedirBocadillo
+@using AppForSEII2526.Web.Services
+@using AppForSEII2526.Web.Components.Layout
+
+@inject NavigationManager NavManager
+@inject PedirBocadilloStateContainer StateContainer
+@inject ILogger<CreatePedirBocadillo> Logger
+
+<h3>Finalizar Pedido</h3>
+
+<EditForm Model="pedido" OnValidSubmit="AbrirDialogoConfirmacion">
+    <DataAnnotationsValidator />
+    <ValidationSummary class="alert alert-danger" />
+
+    <div class="container-fluid">
+        <div class="card mb-4">
+            <div class="card-header">Datos del Cliente</div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Nombre:</label>
+                        <InputText @bind-Value="pedido.NombreCliente" class="form-control" placeholder="Ej: Jose Javier" />
+                        <ValidationMessage For="@(() => pedido.NombreCliente)" />
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label">Primer Apellido:</label>
+                        <InputText @bind-Value="pedido.Apellido1Cliente" class="form-control" placeholder="Ej: Maestro" />
+                        <ValidationMessage For="@(() => pedido.Apellido1Cliente)" />
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label">Segundo Apellido:</label>
+                        <InputText @bind-Value="pedido.Apellido2Cliente" class="form-control" placeholder="Ej: López" />
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label">Email:</label>
+                        <InputText @bind-Value="pedido.EmailCliente" class="form-control" placeholder="correo@ejemplo.com" />
+                        <ValidationMessage For="@(() => pedido.EmailCliente)" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">Pago</div>
+            <div class="card-body">
+                <div class="col-md-4">
+                    <label class="form-label">Método de Pago:</label>
+                    <InputSelect class="form-select" @bind-Value="pedido.MetodoPago">
+                        <option value="Tarjeta">Tarjeta de Crédito</option>
+                        <option value="Paypal">PayPal</option>
+                        <option value="Efectivo">Efectivo</option>
+                    </InputSelect>
+                </div>
+            </div>
+        </div>
+
+        <h4>Resumen de la Cesta</h4>
+        <div class="table-responsive mb-3">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Bocadillo</th>
+                        <th>Pan</th>
+                        <th>Precio</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in StateContainer.CarritoVisual)
+                    {
+                        <tr>
+                            <td>@item.Nombre</td>
+                            <td>@item.TipoPan</td>
+                            <td>@item.Precio.ToString("C")</td>
+                            <td>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="() => VolverAlSelect()">Modificar</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr class="fw-bold fs-5">
+                        <td colspan="2" class="text-end">Total a Pagar:</td>
+                        <td class="text-primary">@StateContainer.PrecioTotal.ToString("C")</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <div class="d-flex justify-content-between">
+            <button type="button" class="btn btn-secondary" @onclick="VolverAlSelect">
+                <i class="bi bi-arrow-left"></i> Seguir Comprando
+            </button>
+
+            <button type="submit" class="btn btn-success btn-lg" disabled="@(!StateContainer.CarritoVisual.Any())">
+                Confirmar y Pagar
+            </button>
+        </div>
+    </div>
+</EditForm>
+
+@if (dialogoAbierto)
+{
+    <Dialog Caption="Confirmar Pedido"
+            Message="¿Estás seguro de que quieres realizar este pedido?"
+            OnClose="@AlCerrarDialogo"
+            Type="Dialog.Category.SaveNot">
+    </Dialog>
+}
+
+@code {
+    private PedirBocadilloCreateDTO pedido => StateContainer.Pedido;
+    private bool dialogoAbierto = false;
+
+    protected override void OnInitialized()
+    {
+        if (string.IsNullOrEmpty(pedido.MetodoPago)) pedido.MetodoPago = "Tarjeta";
+    }
+
+    private void VolverAlSelect()
+    {
+        NavManager.NavigateTo("/PedirBocadillo/SelectPedirBocadillo");
+    }
+
+    private void AbrirDialogoConfirmacion()
+    {
+        dialogoAbierto = true;
+    }
+
+    private async Task AlCerrarDialogo(bool aceptado)
+    {
+        dialogoAbierto = false;
+
+        if (aceptado)
+        {
+            Logger.LogInformation("Enviando pedido simulado...");
+            await Task.Delay(500);
+
+            NavManager.NavigateTo($"/PedirBocadillo/DetallePedido?id=1");
+        }
+    }
+}

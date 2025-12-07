@@ -13,7 +13,7 @@ namespace AppForSEII2526.Web.Services
             Bocadillos = new List<BocadilloPedidoItemDTO>(),
             NombreCliente = "",
             Apellido1Cliente = "",
-            EmailCliente = "",
+            EmailCliente = null,
             MetodoPago = "Tarjeta"
         };
 
