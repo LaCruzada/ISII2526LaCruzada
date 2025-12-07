@@ -1,9 +1,7 @@
 ﻿@page "/bonos/Detallecompra"
-@using AppForSEII2526.API.ComprarBonoBocadilloDTOs
-@using AppForSEII2526.API.DTOs.CompraBonoDTOs
+@using AppForSEII2526.Web.API
 @using AppForSEII2526.Web.Services
-@using AppForSEII2526.Web.Components
-@using AppForSEII2526.API.Models
+@implements IDisposable
 
 @inject ILogger<DetallesBonosBocadillos> logger
 @inject ComprarBonoStateContainer bonoState
@@ -11,109 +9,54 @@
 
 <h3>Detalle de la Compra de Bonos</h3>
 
-@if (compra == null || compra.BonoItem.Count == 0)
+@if (compra == null || compra.BonoItem == null || compra.BonoItem.Count == 0)
 {
-    <div class="alert alert-warning" role="alert">
-        <strong>Atención:</strong> No hay bonos en el carrito. <a href="/bonos/seleccionar">Volver a seleccionar bonos</a>
-    </div>
+    <p>@error</p>
 }
 else
 {
     <div class="container-fluid">
-        <EditForm Model="@compra" OnValidSubmit="@ConfirmarCompra">
-            <DataAnnotationsValidator />
-            <ValidationSummary />
+        <table class="table table-borderless table-sm">
+            <tr>
+                <th>Fecha de Compra</th>
+                <td id="FechaCompra">@compra.FechaCompra.ToString("dd/MM/yyyy HH:mm:ss")</td>
+            </tr>
+        </table>
 
-            <h4>Datos del Cliente</h4>
-            <div class="row mb-3">
-                <div class="col-md-4">
-                    <label for="nombre" class="form-label">Nombre</label>
-                    <InputText id="nombre" class="form-control" @bind-Value="compra.NombreCliente" />
-                    <ValidationMessage For="@(() => compra.NombreCliente)" />
-                </div>
-                <div class="col-md-4">
-                    <label for="apellido1" class="form-label">Primer Apellido</label>
-                    <InputText id="apellido1" class="form-control" @bind-Value="compra.ApellidoCliente1" />
-                    <ValidationMessage For="@(() => compra.ApellidoCliente1)" />
-                </div>
-                <div class="col-md-4">
-                    <label for="apellido2" class="form-label">Segundo Apellido</label>
-                    <InputText id="apellido2" class="form-control" @bind-Value="compra.ApellidoCliente2" />
-                    <ValidationMessage For="@(() => compra.ApellidoCliente2)" />
-                </div>
-            </div>
+        <h4>Bonos Comprados</h4>
 
-            <h4>Método de Pago</h4>
-            <div class="row mb-3">
-                <div class="col-md-12">
-                    <InputRadioGroup @bind-Value="compra.pago">
-                        <div class="form-check">
-                            <InputRadio class="form-check-input" Value="@MetodoPago.Tarjeta" id="pagoTarjeta" />
-                            <label class="form-check-label" for="pagoTarjeta">
-                                Tarjeta de Crédito/Débito
-                            </label>
-                        </div>
-                        <div class="form-check">
-                            <InputRadio class="form-check-input" Value="@MetodoPago.Paypal" id="pagoPaypal" />
-                            <label class="form-check-label" for="pagoPaypal">
-                                PayPal
-                            </label>
-                        </div>
-                        <div class="form-check">
-                            <InputRadio class="form-check-input" Value="@MetodoPago.GooglePay" id="pagoGooglePay" />
-                            <label class="form-check-label" for="pagoGooglePay">
-                                Google Pay
-                            </label>
-                        </div>
-                    </InputRadioGroup>
-                    <ValidationMessage For="@(() => compra.pago)" />
-                </div>
-            </div>
-
-            <table class="table table-borderless table-sm">
+        <table class="table" id="BonosComprados">
+            <thead>
                 <tr>
-                    <th>Fecha de Compra</th>
-                    <td id="FechaCompra">@compra.FechaCompra.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                    <th scope="col">Nombre</th>
+                    <th scope="col">Tipo</th>
+                    <th scope="col">Cantidad</th>
+                    <th scope="col">Precio Unitario</th>
+                    <th scope="col">Subtotal</th>
                 </tr>
-            </table>
-
-            <h4>Bonos Comprados</h4>
-
-            <table class="table" id="BonosComprados">
-                <thead>
-                    <tr>
-                        <th scope="col">Nombre</th>
-                        <th scope="col">Tipo</th>
-                        <th scope="col">Cantidad</th>
-                        <th scope="col">Precio Unitario</th>
-                        <th scope="col">Subtotal</th>
+            </thead>
+            <tbody>
+                @foreach (var item in compra.BonoItem)
+                {
+                    <tr id="BonoItem_@item.Nombre">
+                        <td>@item.Nombre</td>
+                        <td>@item.Tipo</td>
+                        <td>@item.Cantidad</td>
+                        <td>@item.PrecioUnitario.ToString("F2") €</td>
+                        <td>@((item.PrecioUnitario * item.Cantidad).ToString("F2")) €</td>
                     </tr>
-                </thead>
-                <tbody>
-                    @foreach (var item in compra.BonoItem)
-                    {
-                        <tr id="BonoItem_@item.BonoID">
-                            <td>@item.Nombre</td>
-                            <td>@item.Tipo</td>
-                            <td>@item.Cantidad</td>
-                            <td>@item.PrecioUnitario.ToString("F2") €</td>
-                            <td>@((item.PrecioUnitario * item.Cantidad).ToString("F2")) €</td>
-                        </tr>
-                    }
-                </tbody>
-                <tfoot>
-                    <tr>
-                        <th scope="row" colspan="4" class="text-end">Precio Total</th>
-                        <td id="PrecioTotal"><strong>@compra.PrecioTotal.ToString("F2") €</strong></td>
-                    </tr>
-                </tfoot>
-            </table>
+                }
+            </tbody>
+            <tfoot>
+                <th scope="row" colspan="4" class="text-end">Precio Total</th>
+                <td id="PrecioTotal">@CalcularPrecioTotal().ToString("F2") €</td>
+            </tfoot>
+        </table>
 
-            <div class="d-flex justify-content-between mt-3">
-                <button type="button" class="btn btn-secondary" @onclick="VolverASeleccionar">Volver a Seleccionar</button>
-                <button type="submit" class="btn btn-success" id="ConfirmarCompra">Confirmar Compra</button>
-            </div>
-        </EditForm>
+        <div class="d-flex justify-content-between mt-3">
+            <button type="button" class="btn btn-secondary" @onclick="VolverAtras">Volver a Seleccionar</button>
+            <button type="button" class="btn btn-success" @onclick="ConfirmarCompra" id="ConfirmarCompra">Confirmar Compra</button>
+        </div>
     </div>
 }
 
@@ -124,7 +67,7 @@ else
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header bg-success text-white">
-                    <h5 class="modal-title">Compra Confirmada</h5>
+                    <h5 class="modal-title">¡Compra Confirmada!</h5>
                 </div>
                 <div class="modal-body">
                     <div class="alert alert-success" role="alert">
@@ -134,20 +77,12 @@ else
                     <h5>Resumen de la Compra</h5>
                     <table class="table table-borderless table-sm">
                         <tr>
-                            <th>Cliente:</th>
-                            <td id="ResumenCliente">@compraConfirmada.NombreCliente @compraConfirmada.ApellidoCliente1 @compraConfirmada.ApellidoCliente2</td>
-                        </tr>
-                        <tr>
-                            <th>Método de Pago:</th>
-                            <td id="ResumenMetodoPago">@ObtenerNombreMetodoPago(compraConfirmada.pago)</td>
-                        </tr>
-                        <tr>
                             <th>Fecha de Compra:</th>
-                            <td id="ResumenFecha">@compraConfirmada.FechaCompra.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                            <td id="ResumenFecha">@compra.FechaCompra.ToString("dd/MM/yyyy HH:mm:ss")</td>
                         </tr>
                         <tr>
                             <th>Número de Bonos:</th>
-                            <td id="ResumenNumeroBonos">@compraConfirmada.BonoItem.Count</td>
+                            <td id="ResumenNumeroBonos">@compra.BonoItem.Count</td>
                         </tr>
                     </table>
 
@@ -163,9 +98,9 @@ else
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var item in compraConfirmada.BonoItem)
+                            @foreach (var item in compra.BonoItem)
                             {
-                                <tr id="ResumenBono_@item.BonoID">
+                                <tr id="ResumenBono_@item.Nombre">
                                     <td>@item.Nombre</td>
                                     <td>@item.Tipo</td>
                                     <td>@item.Cantidad</td>
@@ -175,10 +110,8 @@ else
                             }
                         </tbody>
                         <tfoot>
-                            <tr class="table-active">
-                                <th colspan="4" class="text-end">Precio Total:</th>
-                                <th class="text-end" id="ResumenPrecioTotal">@compraConfirmada.PrecioTotal.ToString("F2") €</th>
-                            </tr>
+                            <th scope="row" colspan="4" class="text-end">Precio Total</th>
+                            <td id="ResumenPrecioTotal">@CalcularPrecioTotal().ToString("F2") €</td>
                         </tfoot>
                     </table>
                 </div>
@@ -190,52 +123,42 @@ else
     </div>
 }
 
-@if (DialogIsOpen)
-{
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        <strong>Error!</strong> @DialogMessage
-        <button type="button" class="btn-close" @onclick="OnDialogClose" aria-label="Close"></button>
-    </div>
-}
-
 @code {
     private ComprarBonoBocadilloPost? compra;
-    private ComprarBonoBocadilloPost? compraConfirmada;
-    private bool DialogIsOpen;
-    private string DialogMessage = string.Empty;
     private bool MostrarResumenFinal = false;
+    private string error = "";
 
     protected override void OnInitialized()
     {
         compra = bonoState.Compra;
 
+        // Suscribirse a cambios del state container
+        bonoState.OnChange += StateHasChanged;
+
         // Validar que hay bonos en el carrito
-        if (compra == null || compra.BonoItem.Count == 0)
+        if (compra == null || compra.BonoItem == null || compra.BonoItem.Count == 0)
         {
+            error = "Error! No hay bonos en el carrito. Por favor, selecciona bonos primero.";
             logger.LogWarning("Usuario intentó acceder a Detalle de Compra sin bonos en el carrito.");
         }
     }
 
-    private void VolverASeleccionar()
+    private void VolverAtras()
     {
         navigation.NavigateTo("/bonos/seleccionar");
     }
 
+    private double CalcularPrecioTotal()
+    {
+        if (compra == null || compra.BonoItem == null || compra.BonoItem.Count == 0)
+            return 0.0;
+
+        return compra.BonoItem.Sum(item => item.PrecioUnitario * item.Cantidad);
+    }
+
     private void ConfirmarCompra()
     {
-
-        compraConfirmada = new ComprarBonoBocadilloPost
-        {
-            CompraId = compra.CompraId,
-            NombreCliente = compra.NombreCliente,
-            ApellidoCliente1 = compra.ApellidoCliente1,
-            ApellidoCliente2 = compra.ApellidoCliente2,
-            FechaCompra = compra.FechaCompra,
-            pago = compra.pago,
-            BonoItem = compra.BonoItem.ToList()
-        };
-
-        // Mostrar el detalle de la compra
+        // Mostrar el modal de resumen final
         MostrarResumenFinal = true;
     }
 
@@ -243,29 +166,16 @@ else
     {
         MostrarResumenFinal = false;
         
-       
+        // Limpiar el carrito
         bonoState.CompraProcesada();
         
-     
-        Task.Delay(500).ContinueWith(_ => 
-        {
-            InvokeAsync(() => navigation.NavigateTo("/"));
-        });
+        // Redirigir a la página principal
+        navigation.NavigateTo("/");
     }
 
-    private void OnDialogClose()
+    public void Dispose()
     {
-        DialogIsOpen = false;
-    }
-
-    private string ObtenerNombreMetodoPago(MetodoPago metodo)
-    {
-        return metodo switch
-        {
-            MetodoPago.Tarjeta => "Tarjeta de Crédito/Débito",
-            MetodoPago.Paypal => "PayPal",
-            MetodoPago.GooglePay => "Google Pay",
-            _ => metodo.ToString()
-        };
+        // Desuscribirse para evitar memory leaks
+        bonoState.OnChange -= StateHasChanged;
     }
 }

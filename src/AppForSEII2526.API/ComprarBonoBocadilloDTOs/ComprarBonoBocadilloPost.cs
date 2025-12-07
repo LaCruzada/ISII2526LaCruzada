@@ -1,13 +1,6 @@
 ﻿using AppForSEII2526.API.ComprarBonoBocadilloDTOs;
-using AppForSEII2526.API.ComprarBonoBocadilloDTOs;
-using AppForSEII2526.API.Models;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text.Json.Serialization;
 
-namespace AppForSEII2526.API.DTOs.CompraBonoDTOs
+namespace AppForSEII2526.API.ComprarBonoBocadilloDTOs
 {
     public class ComprarBonoBocadilloPost
     {
