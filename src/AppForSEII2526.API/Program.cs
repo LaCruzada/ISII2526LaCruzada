@@ -50,6 +50,17 @@ builder.Services.AddIdentityApiEndpoints<ApplicationUser>()
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
+// Configurar CORS para permitir peticiones desde el proyecto Web
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowBlazorWeb", policy =>
+    {
+        policy.WithOrigins("https://localhost:7081", "http://localhost:5063")
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options => {
@@ -109,6 +120,9 @@ if (app.Environment.IsDevelopment()) {
 }
 
 app.UseHttpsRedirection();
+
+// Usar CORS - DEBE ir antes de UseAuthorization
+app.UseCors("AllowBlazorWeb");
 
 app.UseAuthorization();
 

@@ -1,15 +1,12 @@
 ﻿@page "/bonos/Detallecompra"
 @using AppForSEII2526.Web.API
 @using AppForSEII2526.Web.Services
-@implements IDisposable
-
-@inject ILogger<DetallesBonosBocadillos> logger
-@inject ComprarBonoStateContainer bonoState
+@inject AppForSEII2526APICLIENT apiclient
 @inject NavigationManager navigation
 
 <h3>Detalle de la Compra de Bonos</h3>
 
-@if (compra == null || compra.BonoItem == null || compra.BonoItem.Count == 0)
+@if (compra == null)
 {
     <p>@error</p>
 }
@@ -17,6 +14,14 @@ else
 {
     <div class="container-fluid">
         <table class="table table-borderless table-sm">
+            <tr>
+                <th>Nombre y Apellidos</th>
+                <td id="NombreApellidos">@compra.NombreCliente @compra.ApellidoCliente1 @compra.ApellidoCliente2</td>
+            </tr>
+            <tr>
+                <th>Método de Pago</th>
+                <td id="MetodoPago">@compra.Pago</td>
+            </tr>
             <tr>
                 <th>Fecha de Compra</th>
                 <td id="FechaCompra">@compra.FechaCompra.ToString("dd/MM/yyyy HH:mm:ss")</td>
@@ -32,7 +37,6 @@ else
                     <th scope="col">Tipo</th>
                     <th scope="col">Cantidad</th>
                     <th scope="col">Precio Unitario</th>
-                    <th scope="col">Subtotal</th>
                 </tr>
             </thead>
             <tbody>
@@ -43,139 +47,36 @@ else
                         <td>@item.Tipo</td>
                         <td>@item.Cantidad</td>
                         <td>@item.PrecioUnitario.ToString("F2") €</td>
-                        <td>@((item.PrecioUnitario * item.Cantidad).ToString("F2")) €</td>
                     </tr>
                 }
             </tbody>
             <tfoot>
-                <th scope="row" colspan="4" class="text-end">Precio Total</th>
-                <td id="PrecioTotal">@CalcularPrecioTotal().ToString("F2") €</td>
+                @* colspan is used to state that THREE columns are collapsed *@
+                <th scope="row" colspan="3" class="text-end">Precio Total</th>
+                <td id="PrecioTotal">@compra.PrecioTotal.ToString("F2") €</td>
             </tfoot>
         </table>
-
-        <div class="d-flex justify-content-between mt-3">
-            <button type="button" class="btn btn-secondary" @onclick="VolverAtras">Volver a Seleccionar</button>
-            <button type="button" class="btn btn-success" @onclick="ConfirmarCompra" id="ConfirmarCompra">Confirmar Compra</button>
-        </div>
-    </div>
-}
-
-@* Modal de confirmación final *@
-@if (MostrarResumenFinal)
-{
-    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header bg-success text-white">
-                    <h5 class="modal-title">¡Compra Confirmada!</h5>
-                </div>
-                <div class="modal-body">
-                    <div class="alert alert-success" role="alert">
-                        <strong>¡Gracias por tu compra!</strong> Tu pedido ha sido procesado exitosamente.
-                    </div>
-
-                    <h5>Resumen de la Compra</h5>
-                    <table class="table table-borderless table-sm">
-                        <tr>
-                            <th>Fecha de Compra:</th>
-                            <td id="ResumenFecha">@compra.FechaCompra.ToString("dd/MM/yyyy HH:mm:ss")</td>
-                        </tr>
-                        <tr>
-                            <th>Número de Bonos:</th>
-                            <td id="ResumenNumeroBonos">@compra.BonoItem.Count</td>
-                        </tr>
-                    </table>
-
-                    <h6>Detalle de Bonos Comprados</h6>
-                    <table class="table table-sm table-striped">
-                        <thead>
-                            <tr>
-                                <th>Nombre</th>
-                                <th>Tipo</th>
-                                <th>Cantidad</th>
-                                <th>Precio Unit.</th>
-                                <th class="text-end">Subtotal</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var item in compra.BonoItem)
-                            {
-                                <tr id="ResumenBono_@item.Nombre">
-                                    <td>@item.Nombre</td>
-                                    <td>@item.Tipo</td>
-                                    <td>@item.Cantidad</td>
-                                    <td>@item.PrecioUnitario.ToString("F2") €</td>
-                                    <td class="text-end">@((item.PrecioUnitario * item.Cantidad).ToString("F2")) €</td>
-                                </tr>
-                            }
-                        </tbody>
-                        <tfoot>
-                            <th scope="row" colspan="4" class="text-end">Precio Total</th>
-                            <td id="ResumenPrecioTotal">@CalcularPrecioTotal().ToString("F2") €</td>
-                        </tfoot>
-                    </table>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" @onclick="CerrarResumenYRedirigir" id="BtnCerrarResumen">Aceptar</button>
-                </div>
-            </div>
-        </div>
     </div>
 }
 
 @code {
-    private ComprarBonoBocadilloPost? compra;
-    private bool MostrarResumenFinal = false;
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public int CompraID { get; set; }
+
+    private ComprarBonoBocadilloDetalle? compra;
     private string error = "";
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        compra = bonoState.Compra;
-
-        // Suscribirse a cambios del state container
-        bonoState.OnChange += StateHasChanged;
-
-        // Validar que hay bonos en el carrito
-        if (compra == null || compra.BonoItem == null || compra.BonoItem.Count == 0)
+        try
         {
-            error = "Error! No hay bonos en el carrito. Por favor, selecciona bonos primero.";
-            logger.LogWarning("Usuario intentó acceder a Detalle de Compra sin bonos en el carrito.");
+            compra = await apiclient.GetCompraAsync(CompraID);
         }
-    }
-
-    private void VolverAtras()
-    {
-        navigation.NavigateTo("/bonos/seleccionar");
-    }
-
-    private double CalcularPrecioTotal()
-    {
-        if (compra == null || compra.BonoItem == null || compra.BonoItem.Count == 0)
-            return 0.0;
-
-        return compra.BonoItem.Sum(item => item.PrecioUnitario * item.Cantidad);
-    }
-
-    private void ConfirmarCompra()
-    {
-        // Mostrar el modal de resumen final
-        MostrarResumenFinal = true;
-    }
-
-    private void CerrarResumenYRedirigir()
-    {
-        MostrarResumenFinal = false;
-        
-        // Limpiar el carrito
-        bonoState.CompraProcesada();
-        
-        // Redirigir a la página principal
-        navigation.NavigateTo("/");
-    }
-
-    public void Dispose()
-    {
-        // Desuscribirse para evitar memory leaks
-        bonoState.OnChange -= StateHasChanged;
+        catch (ApiException exception)
+        {
+            compra = null;
+            error = $"Error! No existe una compra con id={CompraID}";
+        }
     }
 }
