@@ -1,0 +1,205 @@
+﻿@page "/merchandising/seleccionar"
+@using AppForSEII2526.Web.API
+@using AppForSEII2526.Web.Services
+@using AppForSEII2526.Web.Components
+@implements IDisposable
+@inject MerchandisingStateContainer merchState
+@inject NavigationManager nav
+@inject AppForMoviesAPIClient api
+
+<h3>Seleccionar Productos de Merchandising</h3>
+
+<div class="container-fluid">
+    <!-- Mensajes de error -->
+    <div class="row alert alert-danger" role="alert" hidden="@hideErrors">
+        <p id="ErrorsShown">@errors</p>
+    </div>
+
+    <!-- Resumen carrito -->
+    <div class="row">
+        <div class="d-flex justify-content-between">
+            <div><b>Productos en carrito:</b> @compra.Items.Count</div>
+            <button class="btn btn-primary" id="ComprarMerch" @onclick="@IrACompra" disabled="@CompraButtonDisabled">Comprar merch</button>
+        </div>
+    </div>
+
+    <!-- Mostrar/Ocultar carrito -->
+    <div class="row">
+        <button class="btn btn-outline-primary" id="showCarrito" @onclick="@ToggleCarrito">
+            @(hiddenCarrito ? "Mostrar" : "Ocultar") Carrito
+        </button>
+    </div>
+
+    <!-- Carrito -->
+    <div class="row" hidden="@hiddenCarrito">
+        @foreach (var item in compra.Items)
+        {
+            <div class="card m-2" style="width: 18rem;">
+                <div class="card-body">
+                    <h5 class="card-title">@item.Nombre</h5>
+                    <p class="card-text">
+                        <strong>Tipo:</strong> @item.Tipo<br />
+                        <strong>Cantidad:</strong> @item.Cantidad<br />
+                        <strong>Precio Unitario:</strong> @item.PrecioUnitario.ToString("F2") €<br />
+                        <strong>Subtotal:</strong> @((item.PrecioUnitario * item.Cantidad).ToString("F2")) €
+                    </p>
+                    <button class="btn btn-danger btn-sm" @onclick="@(() => RemoveItem(item))">Eliminar</button>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Filtros -->
+    <div class="row mt-3">
+        <h5>Filtrar Productos</h5>
+        <div class="input-group">
+            <span class="input-group-text">Tipo</span>
+            <select class="form-select" @bind="tipoSelected" id="selectTipo">
+                <option value="All">Todos</option>
+                @foreach (var t in tiposNombres)
+                {
+                    <option value="@t">@t</option>
+                }
+            </select>
+
+            <span class="input-group-text">Precio mín</span>
+            <InputNumber @bind-Value="minPrecio" class="form-control" id="minPrecio" />
+
+            <span class="input-group-text">Precio máx</span>
+            <InputNumber @bind-Value="maxPrecio" class="form-control" id="maxPrecio" />
+
+            <button class="btn btn-outline-primary" id="searchProducts" @onclick="@BuscarProductos">Buscar</button>
+        </div>
+    </div>
+
+    <!-- Tabla de productos -->
+    <div class="d-flex justify-content-between mt-3">
+        <div class="container-fluid">
+            @if (Productos == null)
+            {
+                <p><em>Cargando productos…</em></p>
+            }
+            else if (!Productos.Any())
+            {
+                <p><em>No hay merchandising disponible</em></p>
+            }
+            else
+            {
+                <div class="mh-100 table-responsive">
+                    <table class="table table-hover" id="TableOfProducts">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Tipo</th>
+                                <th>Precio</th>
+                                <th>Stock</th>
+                                <th>Añadir</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var p in Productos)
+                            {
+                                var enCarrito = CantidadEnCarrito(p.Id);
+                                var botonDeshabilitado = p.Stock == 0 || enCarrito >= p.Stock;
+
+                                <tr id="ProductData_@p.Id">
+                                    <td>@p.Nombre</td>
+                                    <td>@p.Tipo</td>
+                                    <td>@p.Precio.ToString("F2") €</td>
+                                    <td>@p.Stock</td>
+                                    <td>
+                                        <button class="btn btn-outline-secondary"
+                                                id="addProduct_@p.Id"
+                                                @onclick="@(() => AddProduct(p))"
+                                                disabled="@botonDeshabilitado">
+                                            Añadir
+                                        </button>
+                                        @if (enCarrito > 0)
+                                        {
+                                            <small class="text-muted d-block">(@enCarrito en carrito)</small>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<ProductoSelectDTO> Productos;
+    private List<string> tiposNombres = new();
+    private string tipoSelected = "All";
+    private decimal? minPrecio;
+    private decimal? maxPrecio;
+    private string errors = "";
+    private bool hiddenCarrito = true;
+
+    private ComprarMerchandisingCreateDTO compra => merchState.Compra;
+
+    private bool hideErrors => string.IsNullOrEmpty(errors);
+    private bool CompraButtonDisabled => compra.Items.Count == 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        merchState.OnChange += StateHasChanged;
+
+        try
+        {
+            tiposNombres = await api.GetTipoProductoNamesAsync(); // endpoint que devuelva List<string>
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error al cargar tipos de producto");
+            tiposNombres = new();
+        }
+
+        await BuscarProductos(); // carga inicial sin filtros
+    }
+
+    private async Task BuscarProductos()
+    {
+        errors = "";
+        try
+        {
+            var tipo = tipoSelected == "All" ? null : tipoSelected;
+            Productos = await api.GetProductosDisponiblesAsync(null, tipo, minPrecio, maxPrecio);
+        }
+        catch (ApiException ex)
+        {
+            logger.LogError(ex, "Error al obtener productos");
+            errors = "Error al conectar con el servicio";
+            Productos = new();
+        }
+    }
+
+    private void AddProduct(ProductoSelectDTO p)
+    {
+        var actual = CantidadEnCarrito(p.Id);
+        if (actual >= p.Stock)
+        {
+            errors = $"No hay más stock de '{p.Nombre}'";
+            return;
+        }
+        merchState.AddProduct(p);
+        errors = "";
+    }
+
+    private void RemoveItem(ProductoItemDTO item)
+    {
+        merchState.RemoveProduct(item);
+        if (compra.Items.Count == 0) hiddenCarrito = true;
+    }
+
+    private void ToggleCarrito() => hiddenCarrito = !hiddenCarrito;
+
+    private int CantidadEnCarrito(int productoId) =>
+        compra.Items.FirstOrDefault(i => i.ProductoId == productoId)?.Cantidad ?? 0;
+
+    private void IrACompra() => nav.NavigateTo("/merchandising/comprar");
+
+    public void Dispose() => merchState.OnChange -= StateHasChanged;
+}
