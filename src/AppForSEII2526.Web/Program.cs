@@ -5,7 +5,8 @@ using AppForSEII2526.Web.Components;
 using AppForSEII2526.Web.Components.Account;
 using AppForSEII2526.Web.Data;
 using AppForSEII2526.Web.API;
-using AppForSEII2526.Web.Services; 
+using AppForSEII2526.Web.Services;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,15 +19,11 @@ builder.Services.AddScoped<IdentityUserAccessor>();
 builder.Services.AddScoped<IdentityRedirectManager>();
 builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
 
-
-builder.Services.AddScoped<ComprarBonoStateContainer>();
-builder.Services.AddScoped<PedirBocadilloStateContainer>();
-
 builder.Services.AddAuthentication(options =>
-    {
-        options.DefaultScheme = IdentityConstants.ApplicationScheme;
-        options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
-    })
+{
+    options.DefaultScheme = IdentityConstants.ApplicationScheme;
+    options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
+})
     .AddIdentityCookies();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
@@ -41,8 +38,23 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 
-string? URI2API = builder.Configuration.GetValue(typeof(string), "AppForMovies_API") as string;
-builder.Services.AddScoped<AppForSEII2526APICLIENT>(sp => new AppForSEII2526APICLIENT(URI2API, new HttpClient()));
+//string? URI2API = builder.Configuration.GetValue(typeof(string), "AppForSEII2526APIClient") as string;
+
+//builder.Services.AddScoped<AppForSEII2526APIClient>(sp => new AppForSEII2526APIClient(URI2API, new HttpClient()));
+var apiBaseUrl = builder.Configuration["ApiBaseUrl"];
+
+if (string.IsNullOrWhiteSpace(apiBaseUrl))
+{
+    throw new InvalidOperationException("ApiBaseUrl no está configurado en appsettings.json");
+}
+
+builder.Services.AddScoped<AppForSEII2526APICLIENT>(sp =>
+    new AppForSEII2526APICLIENT(apiBaseUrl!, new HttpClient()));
+
+//adding an In-memory state container service
+//https://learn.microsoft.com/en-us/aspnet/core/blazor/state-management/?view=aspnetcore-8.0#in-memory-state-container-service
+builder.Services.AddScoped<ComprarBonoStateContainer>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
