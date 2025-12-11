@@ -21,6 +21,7 @@ builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuth
 
 builder.Services.AddScoped<ComprarBonoStateContainer>();
 builder.Services.AddScoped<PedirBocadilloStateContainer>();
+builder.Services.AddScoped<MerchandisingStateContainer>();
 
 builder.Services.AddAuthentication(options =>
     {
