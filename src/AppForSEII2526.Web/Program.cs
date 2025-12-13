@@ -54,6 +54,7 @@ builder.Services.AddScoped<AppForSEII2526APICLIENT>(sp =>
 //adding an In-memory state container service
 //https://learn.microsoft.com/en-us/aspnet/core/blazor/state-management/?view=aspnetcore-8.0#in-memory-state-container-service
 builder.Services.AddScoped<ComprarBonoStateContainer>();
+builder.Services.AddScoped<PedirBocadilloStateContainer>();
 
 var app = builder.Build();
 

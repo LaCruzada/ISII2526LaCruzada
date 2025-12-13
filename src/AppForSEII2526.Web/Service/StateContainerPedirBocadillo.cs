@@ -7,40 +7,30 @@ namespace AppForSEII2526.Web.Services
 {
     public class PedirBocadilloStateContainer
     {
-
         public PedirBocadilloCreateDTO Pedido { get; private set; } = new PedirBocadilloCreateDTO()
         {
             Bocadillos = new List<BocadilloPedidoItemDTO>(),
             NombreCliente = "",
             Apellido1Cliente = "",
-            EmailCliente = null,
+            Apellido2Cliente = null, 
+            EmailCliente = null,     
             MetodoPago = "Tarjeta"
         };
 
         public List<BocadilloSelectDTO> CarritoVisual { get; private set; } = new List<BocadilloSelectDTO>();
 
-        public decimal PrecioTotal
-        {
-            get
-            {
-                return CarritoVisual.Sum(b => b.Precio);
-            }
-        }
-
+        public decimal PrecioTotal => CarritoVisual.Sum(b => b.Precio);
 
         public event Action? OnChange;
         private void NotifyStateChanged() => OnChange?.Invoke();
 
         public void AgregarBocadillo(BocadilloSelectDTO bocadilloSeleccionado)
         {
-
             CarritoVisual.Add(bocadilloSeleccionado);
 
             var itemExistente = Pedido.Bocadillos.FirstOrDefault(b => b.BocadilloId == bocadilloSeleccionado.Id);
-
             if (itemExistente != null)
             {
-
                 itemExistente.Cantidad++;
             }
             else
@@ -51,18 +41,14 @@ namespace AppForSEII2526.Web.Services
                     Cantidad = 1
                 });
             }
-
             NotifyStateChanged();
         }
 
         public void EliminarBocadillo(BocadilloSelectDTO bocadilloSeleccionado)
         {
-
             CarritoVisual.Remove(bocadilloSeleccionado);
 
-
             var itemExistente = Pedido.Bocadillos.FirstOrDefault(b => b.BocadilloId == bocadilloSeleccionado.Id);
-
             if (itemExistente != null)
             {
                 itemExistente.Cantidad--;
@@ -71,7 +57,6 @@ namespace AppForSEII2526.Web.Services
                     Pedido.Bocadillos.Remove(itemExistente);
                 }
             }
-
             NotifyStateChanged();
         }
 
@@ -81,7 +66,6 @@ namespace AppForSEII2526.Web.Services
             CarritoVisual.Clear();
             NotifyStateChanged();
         }
-
         public void PedidoProcesado()
         {
             Pedido = new PedirBocadilloCreateDTO()
@@ -89,9 +73,11 @@ namespace AppForSEII2526.Web.Services
                 Bocadillos = new List<BocadilloPedidoItemDTO>(),
                 NombreCliente = "",
                 Apellido1Cliente = "",
-                EmailCliente = "",
+                Apellido2Cliente = null, 
+                EmailCliente = null,     
                 MetodoPago = "Tarjeta"
             };
+
             CarritoVisual = new List<BocadilloSelectDTO>();
 
             NotifyStateChanged();
