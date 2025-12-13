@@ -1,0 +1,201 @@
+﻿@page "/Resenya/Create"
+@using AppForSEII2526.API.DTOs.DTOsCrearResenya.ResenyaDTOs
+@using AppForSEII2526.API.Models
+@using AppForSEII2526.Web.StateContainers
+@using AppForSEII2526.Web.Components.Layout
+@inject NavigationManager NavManager
+@inject StateContainerCrearResenya StateContainer
+@inject ILogger<CreateResenya> Logger
+
+<h3>Publicar Reseña</h3>
+<div class="container-fluid">
+    <div class="card mb-4">
+        <div class="card-header">Datos de la Reseña</div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Nombre de usuario (opcional):</label>
+                    <input class="form-control" @bind="resenya.NombreUsuario" placeholder="Ej: Caridad" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Título:</label>
+                    <input class="form-control" maxlength="20" required @bind="resenya.Titulo" placeholder="Ej: Muy recomendable" />
+                    @if (!string.IsNullOrEmpty(errorTitulo))
+                    {
+                        <div class="text-danger small">@errorTitulo</div>
+                    }
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Valoración general:</label>
+                    <select class="form-select" @bind="valoracionGeneralSeleccionada">
+                        <option value="">Selecciona:</option>
+                        @foreach (var valor in Enum.GetValues<EnumValoracion_General>())
+                        {
+                            <option value="@((int)valor)">@((int)valor) estrella(s)</option>
+                        }
+                    </select>
+                    @if (!string.IsNullOrEmpty(errorValoracion))
+                    {
+                        <div class="text-danger small">@errorValoracion</div>
+                    }
+
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Descripción:</label>
+                    <textarea class="form-control" maxlength="200" required @bind="resenya.Descripcion" placeholder="Escribe tu opinión..."></textarea>
+                    @if (!string.IsNullOrEmpty(errorDescripcion))
+                    {
+                        <div class="text-danger small">@errorDescripcion</div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">Bocadillos</div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Tamaño</th>
+                            <th>Precio</th>
+                            <th>Puntuación (1-10)</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (int i = 0; i < resenya.ResenyaBocadillos.Count; i++)
+                        {
+                            var bocadillo = resenya.ResenyaBocadillos[i];
+                            <tr>
+                                <td>@bocadillo.Nombre</td>
+                                <td>@bocadillo.Tamano</td>
+                                <td>@bocadillo.PVP.ToString("0.00") €</td>
+                                <td>
+                                    <input type="number" class="form-control" min="1" max="10" @bind="bocadillo.Puntuacion" />
+                                    @if (erroresBocadillos.ContainsKey(i) && !string.IsNullOrEmpty(erroresBocadillos[i]))
+                                    {
+                                        <div class="text-danger small">@erroresBocadillos[i]</div>
+                                    }
+                                </td>
+                                <td>
+                                    <button type="button" class="btn btn-outline-danger btn-sm" @onclick="() => QuitarBocadillo(bocadillo)">Quitar</button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between">
+        <button type="button" class="btn btn-secondary" @onclick="VolverASeleccion">
+            <i class="bi bi-arrow-left"></i> Modificar bocadillos
+        </button>
+        <button type="button" class="btn btn-success btn-lg" @onclick="ValidarYConfirmar" disabled="@(!resenya.ResenyaBocadillos.Any())">
+            Publicar reseña
+        </button>
+    </div>
+</div>
+
+@if (dialogoAbierto)
+{
+    <Dialog Caption="Confirmar publicación"
+            Message="¿Estás seguro de que quieres publicar esta reseña?"
+            OnClose="@AlCerrarDialogo"
+            Type="Dialog.Category.SaveNot">
+    </Dialog>
+}
+
+@code {
+    private ResenyaForCreacionDTO resenya => StateContainer.Resenya;
+    private bool dialogoAbierto = false;
+    private string errorTitulo;
+    private string errorDescripcion;
+    private string errorValoracion;
+    private Dictionary<int, string> erroresBocadillos = new();
+    private string valoracionGeneralSeleccionada
+    {
+        get => resenya.ValoracionGeneral == 0 ? "" : ((int)resenya.ValoracionGeneral).ToString();
+        set
+        {
+            if (int.TryParse(value, out int val))
+                resenya.ValoracionGeneral = (EnumValoracion_General)val;
+            else
+                resenya.ValoracionGeneral = 0;
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        if (resenya.FechaPublicacion == default)
+            resenya.FechaPublicacion = DateTime.Now;
+    }
+
+    private void VolverASeleccion()
+    {
+        NavManager.NavigateTo("/Resenya/Select");
+    }
+
+    private void QuitarBocadillo(ResenyaBocadilloDTO bocadillo)
+    {
+        StateContainer.EliminarBocadilloParaResenya(bocadillo);
+        StateHasChanged();
+    }
+
+    private void ValidarYConfirmar()
+    {
+        errorTitulo = errorDescripcion = errorValoracion = "";
+        erroresBocadillos.Clear();
+        bool valido = true;
+
+        if (string.IsNullOrWhiteSpace(resenya.Titulo))
+        {
+            errorTitulo = "El título es obligatorio.";
+            valido = false;
+        }
+        if (string.IsNullOrWhiteSpace(resenya.Descripcion))
+        {
+            errorDescripcion = "La descripción es obligatoria.";
+            valido = false;
+        }
+        if (string.IsNullOrEmpty(valoracionGeneralSeleccionada) ||
+        !int.TryParse(valoracionGeneralSeleccionada, out int val) ||
+        val < (int)EnumValoracion_General.Una || val > (int)EnumValoracion_General.Cinco)
+        {
+            errorValoracion = "La valoración general es obligatoria.";
+            valido = false;
+        }
+        for (int i = 0; i < resenya.ResenyaBocadillos.Count; i++)
+        {
+            var bocadillo = resenya.ResenyaBocadillos[i];
+            if (bocadillo.Puntuacion < 1 || bocadillo.Puntuacion > 10)
+            {
+                erroresBocadillos[i] = "La puntuación debe estar entre 1 y 10.";
+                valido = false;
+            }
+        }
+
+        if (valido)
+        {
+            dialogoAbierto = true;
+        }
+    }
+
+    private async Task AlCerrarDialogo(bool aceptado)
+    {
+        dialogoAbierto = false;
+
+        if (aceptado)
+        {
+            Logger.LogInformation("Reseña publicada (simulado)");
+            await Task.Delay(500);
+
+            NavManager.NavigateTo("/Resenya/Details");
+        }
+    }
+}
