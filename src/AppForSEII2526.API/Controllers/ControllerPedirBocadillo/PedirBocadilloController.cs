@@ -112,6 +112,12 @@ namespace AppForSEII2526.API.Controllers.ControllerPedirBocadillo
                     };
                     _context.Users.Add(clienteLogueado);
                 }
+                else {                     
+                    clienteLogueado.Nombre = createDto.NombreCliente;
+                    clienteLogueado.Apellido1 = createDto.Apellido1Cliente;
+                    clienteLogueado.Apellido2 = createDto.Apellido2Cliente;
+                    _context.Users.Update(clienteLogueado);
+                }
 
                 var erroresStock = new List<string>();
                 decimal precioTotalCalculado = 0m;

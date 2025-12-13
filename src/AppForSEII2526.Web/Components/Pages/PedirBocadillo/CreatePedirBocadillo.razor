@@ -3,12 +3,21 @@
 @using AppForSEII2526.API.DTOs.DTOsPedirBocadillo
 @using AppForSEII2526.Web.Services
 @using AppForSEII2526.Web.Components.Layout
+@using System.Text.Json
 
 @inject NavigationManager NavManager
 @inject PedirBocadilloStateContainer StateContainer
 @inject ILogger<CreatePedirBocadillo> Logger
+@inject AppForSEII2526.Web.API.AppForSEII2526APICLIENT ApiClient
 
 <h3>Finalizar Pedido</h3>
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <strong>Ocurrió un error al guardar:</strong> @errorMessage
+        <button type="button" class="btn-close" @onclick="() => errorMessage = null"></button>
+    </div>
+}
 
 <EditForm Model="pedido" OnValidSubmit="AbrirDialogoConfirmacion">
     <DataAnnotationsValidator />
@@ -53,7 +62,7 @@
                     <InputSelect class="form-select" @bind-Value="pedido.MetodoPago">
                         <option value="Tarjeta">Tarjeta de Crédito</option>
                         <option value="Paypal">PayPal</option>
-                        <option value="Efectivo">Efectivo</option>
+                        <option value="GooglePay">Google Pay</option>
                     </InputSelect>
                 </div>
             </div>
@@ -117,6 +126,13 @@
 @code {
     private PedirBocadilloCreateDTO pedido => StateContainer.Pedido;
     private bool dialogoAbierto = false;
+    private string? errorMessage;
+
+    private class RespuestaApiPedido
+    {
+        public string? Message { get; set; }
+        public int PedidoId { get; set; }
+    }
 
     protected override void OnInitialized()
     {
@@ -125,11 +141,12 @@
 
     private void VolverAlSelect()
     {
-        NavManager.NavigateTo("/PedirBocadillo/SelectPedirBocadillo");
+        NavManager.NavigateTo("/PedirBocadillo/SeleccionarPedirBocadillo");
     }
 
     private void AbrirDialogoConfirmacion()
     {
+        errorMessage = null;
         dialogoAbierto = true;
     }
 
@@ -139,10 +156,75 @@
 
         if (aceptado)
         {
-            Logger.LogInformation("Enviando pedido simulado...");
-            await Task.Delay(500);
+            try
+            {
+                var listaParaEnviar = new List<AppForSEII2526.Web.API.BocadilloPedidoItemDTO>();
+                var grupos = StateContainer.CarritoVisual.GroupBy(x => x.Id);
 
-            NavManager.NavigateTo($"/PedirBocadillo/DetallePedido?id=1");
+                foreach (var grupo in grupos)
+                {
+                    listaParaEnviar.Add(new AppForSEII2526.Web.API.BocadilloPedidoItemDTO
+                    {
+                        BocadilloId = grupo.Key,
+                        Cantidad = grupo.Count()
+                    });
+                }
+                string emailFinal = string.IsNullOrWhiteSpace(pedido.EmailCliente)
+                                    ? "cliente@anonimo.com"
+                                    : pedido.EmailCliente;
+
+                var pedidoParaApi = new AppForSEII2526.Web.API.PedirBocadilloCreateDTO
+                {
+                    NombreCliente = pedido.NombreCliente,
+                    Apellido1Cliente = pedido.Apellido1Cliente,
+                    Apellido2Cliente = pedido.Apellido2Cliente ?? "", 
+                    EmailCliente = emailFinal,
+                    MetodoPago = pedido.MetodoPago,
+                    Bocadillos = listaParaEnviar
+                };
+                await ApiClient.CrearPedidoAsync(pedidoParaApi);
+                Logger.LogInformation("Pedido creado correctamente (200 OK).");
+                FinalizarPedidoExitoso();
+                NavManager.NavigateTo("/PedirBocadillo/SeleccionarPedirBocadillo");
+            }
+            catch (AppForSEII2526.Web.API.ApiException ex)
+            {
+                if (ex.Response != null && ex.Response.Contains("Pedido creado correctamente"))
+                {
+                    try
+                    {
+                        var opciones = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                        var respuesta = JsonSerializer.Deserialize<RespuestaApiPedido>(ex.Response, opciones);
+
+                        if (respuesta != null && respuesta.PedidoId > 0)
+                        {
+                            Logger.LogInformation($"Pedido {respuesta.PedidoId} creado. Redirigiendo a detalle.");
+                            FinalizarPedidoExitoso(); 
+                            NavManager.NavigateTo($"/PedirBocadillo/DetallePedido?id={respuesta.PedidoId}");
+                            return;
+                        }
+                    }
+                    catch
+                    {
+                        Logger.LogWarning("No se pudo leer el ID del JSON. Usando redirección estándar.");
+                    }
+                    FinalizarPedidoExitoso();
+                    NavManager.NavigateTo("/PedirBocadillo/SeleccionarPedirBocadillo");
+                    return;
+                }
+
+                errorMessage = $"Error de validación (API): {ex.Response}";
+                Logger.LogError(ex, "Error API");
+            }
+            catch (Exception ex)
+            {
+                errorMessage = "Error inesperado: " + ex.Message;
+                Logger.LogError(ex, "Error General");
+            }
         }
+    }
+    private void FinalizarPedidoExitoso()
+    {
+        StateContainer.PedidoProcesado();
     }
 }

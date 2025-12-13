@@ -1,18 +1,24 @@
 ﻿@page "/PedirBocadillo/SeleccionarPedirBocadillo"
 
-@using AppForSEII2526.API.DTOs.DTOsPedirBocadillo
 @using AppForSEII2526.Web.Services
 
 @inject ILogger<SeleccionarPedirBocadillo> Logger
 @inject PedirBocadilloStateContainer StateContainer
 @inject NavigationManager NavManager
+@inject AppForSEII2526.Web.API.AppForSEII2526APICLIENT ApiClient
 
 <h3>Seleccionar Bocadillos</h3>
 
 <div class="container-fluid">
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong>Error:</strong> @errorMessage
+            <button type="button" class="btn-close" @onclick="() => errorMessage = null"></button>
+        </div>
+    }
     <div class="row">
         <div class="col-8">
-
             <div class="card mb-3">
                 <div class="card-body">
                     <div class="row g-3 align-items-end">
@@ -26,57 +32,63 @@
                             </select>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Nombre (Buscar):</label>
+                            <label class="form-label">Nombre (Filtro local):</label>
                             <input type="text" class="form-control" @bind="filtroNombre" placeholder="Ej: Vegetal" />
                         </div>
                         <div class="col-md-4">
-                            <button class="btn btn-primary w-100" @onclick="AplicarFiltros">
-                                Buscar
-                            </button>
+                            <button class="btn btn-primary w-100" @onclick="AplicarFiltros">Buscar</button>
                         </div>
                     </div>
                 </div>
             </div>
-
             <div class="table-responsive">
-                <table class="table table-striped table-hover">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>Nombre</th>
-                            <th>Pan</th>
-                            <th>Tamaño</th>
-                            <th>Precio</th>
-                            <th>Stock</th>
-                            <th>Acción</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var bocata in BocadillosMostrados)
-                        {
-                            <tr>
-                                <td>@bocata.Nombre</td>
-                                <td>@bocata.TipoPan</td>
-                                <td>@bocata.Tamano</td>
-                                <td>@bocata.Precio.ToString("0.00") €</td>
-                                <td>@bocata.Stock</td>
-                                <td>
-                                    <button class="btn btn-outline-success btn-sm"
-                                            @onclick="@(() => AddBocadillo(bocata))"
-                                            disabled="@(bocata.Stock <= 0)">
-                                        Añadir
-                                    </button>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-                @if (!BocadillosMostrados.Any())
+                @if (BocadillosMostrados == null)
                 {
-                    <div class="alert alert-warning">No hay bocadillos que coincidan.</div>
+                    <div class="text-center p-3">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <p>Cargando datos reales...</p>
+                    </div>
+                }
+                else
+                {
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Pan</th>
+                                <th>Tamaño</th>
+                                <th>Precio</th>
+                                <th>Stock</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var bocata in BocadillosMostrados)
+                            {
+                                <tr>
+                                    <td>@bocata.Nombre</td>
+                                    <td>@bocata.TipoPan</td>
+                                    <td>@bocata.Tamano</td>
+                                    <td>@bocata.Precio.ToString("0.00") €</td>
+                                    <td>@bocata.Stock</td>
+                                    <td>
+                                        <button class="btn btn-outline-success btn-sm"
+                                                @onclick="@(() => AddBocadillo(bocata))"
+                                                disabled="@(bocata.Stock <= 0)">
+                                            Añadir
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                    @if (!BocadillosMostrados.Any())
+                    {
+                        <div class="alert alert-warning">No se encontraron bocadillos.</div>
+                    }
                 }
             </div>
         </div>
-
         <div class="col-4">
             <div class="card border-primary">
                 <div class="card-header bg-primary text-white">
@@ -113,66 +125,61 @@
 </div>
 
 @code {
-    private List<BocadilloSelectDTO> TodosLosBocadillos = new List<BocadilloSelectDTO>();
-    private List<BocadilloSelectDTO> BocadillosMostrados = new List<BocadilloSelectDTO>();
+    private ICollection<AppForSEII2526.API.DTOs.DTOsPedirBocadillo.BocadilloSelectDTO>? BocadillosMostrados;
     private string filtroTamano = "All";
     private string filtroNombre = "";
+    private string? errorMessage;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         StateContainer.OnChange += StateHasChanged;
+        await CargarBocadillosReales();
+    }
 
+    private async Task CargarBocadillosReales()
+    {
         try
         {
-            TodosLosBocadillos = new List<BocadilloSelectDTO>
+            errorMessage = null;
+            string? tamanoEnvio = (filtroTamano == "All") ? null : filtroTamano;
+            var resultadoApi = await ApiClient.GetBocadillosDisponiblesAsync(tamanoEnvio, null);
+            BocadillosMostrados = new List<AppForSEII2526.API.DTOs.DTOsPedirBocadillo.BocadilloSelectDTO>();
+
+            if (resultadoApi != null)
             {
-                new BocadilloSelectDTO { Id = 1, Nombre = "Bocadillo de Tortilla", Precio = 3.50m, TipoPan = "Barra", Tamano = "Normal", Stock = 10 },
-                new BocadilloSelectDTO { Id = 2, Nombre = "Bocadillo Vegetal", Precio = 4.00m, TipoPan = "Integral", Tamano = "Grande", Stock = 5 },
-                new BocadilloSelectDTO { Id = 3, Nombre = "Bocadillo de Jamón", Precio = 5.50m, TipoPan = "Barra", Tamano = "Pequeño", Stock = 0 }, 
-                new BocadilloSelectDTO { Id = 4, Nombre = "Serranito", Precio = 6.00m, TipoPan = "Viena", Tamano = "Normal", Stock = 8 }
-            };
+                var listaFiltrada = string.IsNullOrWhiteSpace(filtroNombre)
+                    ? resultadoApi
+                    : resultadoApi.Where(b => b.Nombre != null && b.Nombre.Contains(filtroNombre, StringComparison.OrdinalIgnoreCase));
+
+                foreach (var itemGenerado in listaFiltrada)
+                {
+                    var miBocata = new AppForSEII2526.API.DTOs.DTOsPedirBocadillo.BocadilloSelectDTO
+                    {
+                        Id = itemGenerado.Id,
+                        Nombre = itemGenerado.Nombre,
+                        TipoPan = itemGenerado.TipoPan,
+                        Tamano = itemGenerado.Tamano,
+                        Precio = (decimal)itemGenerado.Precio,
+                        Stock = itemGenerado.Stock
+                    };
+                    BocadillosMostrados.Add(miBocata);
+                }
+            }
         }
         catch (Exception ex)
         {
-            Logger.LogError("Error cargando datos mock: " + ex.Message);
+            BocadillosMostrados = new List<AppForSEII2526.API.DTOs.DTOsPedirBocadillo.BocadilloSelectDTO>();
+            errorMessage = "Error de conexión: " + ex.Message;
         }
-        AplicarFiltros();
     }
 
-    private void AplicarFiltros()
-    {
-        var resultado = TodosLosBocadillos.AsEnumerable();
+    private async Task AplicarFiltros() => await CargarBocadillosReales();
 
-        if (filtroTamano != "All")
-        {
-            resultado = resultado.Where(b => b.Tamano.Equals(filtroTamano, StringComparison.OrdinalIgnoreCase));
-        }
+    private void AddBocadillo(AppForSEII2526.API.DTOs.DTOsPedirBocadillo.BocadilloSelectDTO b) => StateContainer.AgregarBocadillo(b);
 
-        if (!string.IsNullOrWhiteSpace(filtroNombre))
-        {
-            resultado = resultado.Where(b => b.Nombre.Contains(filtroNombre, StringComparison.OrdinalIgnoreCase));
-        }
+    private void RemoveBocadilloItem(AppForSEII2526.API.DTOs.DTOsPedirBocadillo.BocadilloSelectDTO b) => StateContainer.EliminarBocadillo(b);
 
-        BocadillosMostrados = resultado.ToList();
-    }
+    public void Dispose() => StateContainer.OnChange -= StateHasChanged;
 
-    private void AddBocadillo(BocadilloSelectDTO bocata)
-    {
-        StateContainer.AgregarBocadillo(bocata);
-    }
-
-    private void RemoveBocadilloItem(BocadilloSelectDTO item)
-    {
-        StateContainer.EliminarBocadillo(item);
-    }
-
-    public void Dispose()
-    {
-        StateContainer.OnChange -= StateHasChanged;
-    }
-
-    private void ComprarBocadillos()
-    {
-        NavManager.NavigateTo("/PedirBocadillo/Create");
-    }
+    private void ComprarBocadillos() => NavManager.NavigateTo("/PedirBocadillo/Create");
 }
