@@ -1,14 +1,12 @@
 ﻿@page "/PedirBocadillo/DetallePedido"
 
 @using AppForSEII2526.API.DTOs.DTOsPedirBocadillo
-
 @inject NavigationManager NavManager
 @inject AppForSEII2526.Web.API.AppForSEII2526APICLIENT ApiClient
 
 <h3>Detalles del Pedido</h3>
 
 <div class="container-fluid">
-
     @if (!string.IsNullOrEmpty(error))
     {
         <div class="alert alert-danger">
@@ -36,7 +34,7 @@
                     </tr>
                     <tr>
                         <th>Cliente:</th>
-                        <td>@pedido.NombreCliente</td>
+                        <td id="detalleNombreCliente">@pedido.NombreCliente</td>
                     </tr>
                     <tr>
                         <th>Fecha Compra:</th>
@@ -83,7 +81,6 @@
                 </tfoot>
             </table>
         </div>
-
         <div class="mt-3">
             <button class="btn btn-secondary" @onclick="Volver">Volver al Listado</button>
         </div>
@@ -117,7 +114,6 @@
                     FechaCompra = pedidoGenerado.FechaCompra.DateTime,
                     MetodoPago = pedidoGenerado.MetodoPago,
                     PrecioTotal = (decimal)pedidoGenerado.PrecioTotal,
-
                     Bocadillos = new List<BocadilloItemDTO>()
                 };
 
@@ -140,9 +136,5 @@
             pedido = null;
         }
     }
-
-    private void Volver()
-    {
-        NavManager.NavigateTo("/PedirBocadillo/SeleccionarPedirBocadillo");
-    }
+    private void Volver() => NavManager.NavigateTo("/PedirBocadillo/SeleccionarPedirBocadillo");
 }

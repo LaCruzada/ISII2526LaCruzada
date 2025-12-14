@@ -1,7 +1,6 @@
 ﻿@page "/PedirBocadillo/SeleccionarPedirBocadillo"
 
 @using AppForSEII2526.Web.Services
-
 @inject ILogger<SeleccionarPedirBocadillo> Logger
 @inject PedirBocadilloStateContainer StateContainer
 @inject NavigationManager NavManager
@@ -33,10 +32,10 @@
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Nombre (Filtro local):</label>
-                            <input type="text" class="form-control" @bind="filtroNombre" placeholder="Ej: Vegetal" />
+                            <input id="filtroNombre" type="text" class="form-control" @bind="filtroNombre" placeholder="Ej: Vegetal" />
                         </div>
                         <div class="col-md-4">
-                            <button class="btn btn-primary w-100" @onclick="AplicarFiltros">Buscar</button>
+                            <button id="btnBuscar" class="btn btn-primary w-100" @onclick="AplicarFiltros">Buscar</button>
                         </div>
                     </div>
                 </div>
@@ -115,7 +114,7 @@
                 </div>
                 <div class="card-footer">
                     <h5>Total: @StateContainer.PrecioTotal.ToString("0.00") €</h5>
-                    <button class="btn btn-warning w-100" @onclick="ComprarBocadillos" disabled="@(!StateContainer.CarritoVisual.Any())">
+                    <button id="btnTramitar" class="btn btn-warning w-100" @onclick="ComprarBocadillos" disabled="@(!StateContainer.CarritoVisual.Any())">
                         Tramitar
                     </button>
                 </div>
@@ -174,12 +173,8 @@
     }
 
     private async Task AplicarFiltros() => await CargarBocadillosReales();
-
     private void AddBocadillo(AppForSEII2526.API.DTOs.DTOsPedirBocadillo.BocadilloSelectDTO b) => StateContainer.AgregarBocadillo(b);
-
     private void RemoveBocadilloItem(AppForSEII2526.API.DTOs.DTOsPedirBocadillo.BocadilloSelectDTO b) => StateContainer.EliminarBocadillo(b);
-
     public void Dispose() => StateContainer.OnChange -= StateHasChanged;
-
     private void ComprarBocadillos() => NavManager.NavigateTo("/PedirBocadillo/Create");
 }

@@ -30,13 +30,13 @@
                 <div class="row g-3">
                     <div class="col-md-4">
                         <label class="form-label">Nombre:</label>
-                        <InputText @bind-Value="pedido.NombreCliente" class="form-control" placeholder="Ej: Jose Javier" />
+                        <InputText id="inputNombre" @bind-Value="pedido.NombreCliente" class="form-control" placeholder="Ej: Jose Javier" />
                         <ValidationMessage For="@(() => pedido.NombreCliente)" />
                     </div>
 
                     <div class="col-md-4">
                         <label class="form-label">Primer Apellido:</label>
-                        <InputText @bind-Value="pedido.Apellido1Cliente" class="form-control" placeholder="Ej: Maestro" />
+                        <InputText id="inputApellido1" @bind-Value="pedido.Apellido1Cliente" class="form-control" placeholder="Ej: Maestro" />
                         <ValidationMessage For="@(() => pedido.Apellido1Cliente)" />
                     </div>
 
@@ -47,7 +47,7 @@
 
                     <div class="col-12">
                         <label class="form-label">Email:</label>
-                        <InputText @bind-Value="pedido.EmailCliente" class="form-control" placeholder="correo@ejemplo.com" />
+                        <InputText id="inputEmail" @bind-Value="pedido.EmailCliente" class="form-control" placeholder="correo@ejemplo.com" />
                         <ValidationMessage For="@(() => pedido.EmailCliente)" />
                     </div>
                 </div>
@@ -59,7 +59,7 @@
             <div class="card-body">
                 <div class="col-md-4">
                     <label class="form-label">Método de Pago:</label>
-                    <InputSelect class="form-select" @bind-Value="pedido.MetodoPago">
+                    <InputSelect id="selectPago" class="form-select" @bind-Value="pedido.MetodoPago">
                         <option value="Tarjeta">Tarjeta de Crédito</option>
                         <option value="Paypal">PayPal</option>
                         <option value="GooglePay">Google Pay</option>
@@ -107,7 +107,7 @@
                 <i class="bi bi-arrow-left"></i> Seguir Comprando
             </button>
 
-            <button type="submit" class="btn btn-success btn-lg" disabled="@(!StateContainer.CarritoVisual.Any())">
+            <button id="btnPagar" type="submit" class="btn btn-success btn-lg" disabled="@(!StateContainer.CarritoVisual.Any())">
                 Confirmar y Pagar
             </button>
         </div>
@@ -139,10 +139,7 @@
         if (string.IsNullOrEmpty(pedido.MetodoPago)) pedido.MetodoPago = "Tarjeta";
     }
 
-    private void VolverAlSelect()
-    {
-        NavManager.NavigateTo("/PedirBocadillo/SeleccionarPedirBocadillo");
-    }
+    private void VolverAlSelect() => NavManager.NavigateTo("/PedirBocadillo/SeleccionarPedirBocadillo");
 
     private void AbrirDialogoConfirmacion()
     {
@@ -153,14 +150,12 @@
     private async Task AlCerrarDialogo(bool aceptado)
     {
         dialogoAbierto = false;
-
         if (aceptado)
         {
             try
             {
                 var listaParaEnviar = new List<AppForSEII2526.Web.API.BocadilloPedidoItemDTO>();
                 var grupos = StateContainer.CarritoVisual.GroupBy(x => x.Id);
-
                 foreach (var grupo in grupos)
                 {
                     listaParaEnviar.Add(new AppForSEII2526.Web.API.BocadilloPedidoItemDTO
@@ -169,15 +164,14 @@
                         Cantidad = grupo.Count()
                     });
                 }
-                string emailFinal = string.IsNullOrWhiteSpace(pedido.EmailCliente)
-                                    ? "cliente@anonimo.com"
-                                    : pedido.EmailCliente;
+
+                string emailFinal = string.IsNullOrWhiteSpace(pedido.EmailCliente) ? "cliente@anonimo.com" : pedido.EmailCliente;
 
                 var pedidoParaApi = new AppForSEII2526.Web.API.PedirBocadilloCreateDTO
                 {
                     NombreCliente = pedido.NombreCliente,
                     Apellido1Cliente = pedido.Apellido1Cliente,
-                    Apellido2Cliente = pedido.Apellido2Cliente ?? "", 
+                    Apellido2Cliente = pedido.Apellido2Cliente ?? "",
                     EmailCliente = emailFinal,
                     MetodoPago = pedido.MetodoPago,
                     Bocadillos = listaParaEnviar
@@ -199,20 +193,19 @@
                         if (respuesta != null && respuesta.PedidoId > 0)
                         {
                             Logger.LogInformation($"Pedido {respuesta.PedidoId} creado. Redirigiendo a detalle.");
-                            FinalizarPedidoExitoso(); 
+                            FinalizarPedidoExitoso();
                             NavManager.NavigateTo($"/PedirBocadillo/DetallePedido?id={respuesta.PedidoId}");
                             return;
                         }
                     }
                     catch
                     {
-                        Logger.LogWarning("No se pudo leer el ID del JSON. Usando redirección estándar.");
+                        Logger.LogWarning("No se pudo leer el ID del JSON.");
                     }
                     FinalizarPedidoExitoso();
                     NavManager.NavigateTo("/PedirBocadillo/SeleccionarPedirBocadillo");
                     return;
                 }
-
                 errorMessage = $"Error de validación (API): {ex.Response}";
                 Logger.LogError(ex, "Error API");
             }
