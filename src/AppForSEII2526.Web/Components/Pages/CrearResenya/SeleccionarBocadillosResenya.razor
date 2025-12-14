@@ -129,6 +129,7 @@
     protected override void OnInitialized()
     {
         StateContainer.OnChange += StateHasChanged;
+        BuscarBocadillos();
     }
 
     private async void BuscarBocadillos()
@@ -151,6 +152,7 @@
                 Tamano = (AppForSEII2526.API.Models.EnumTamaño)b.Tamano,
 
             }).ToList();
+            BocadillosMostrados = TodosLosBocadillos;
         }
         catch (Exception ex)
         {

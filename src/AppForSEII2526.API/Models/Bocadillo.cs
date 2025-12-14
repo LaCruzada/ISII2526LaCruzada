@@ -20,7 +20,6 @@ namespace AppForSEII2526.API.Models
 
         [Required]
         public int TipoPanId { get; set; }
-        public string? ResenyaBocadillo { get; set; }
         public List<CompraBocadillo> CompraBocadillos { get; set; } = new List<CompraBocadillo>();
 
 
@@ -34,14 +33,13 @@ namespace AppForSEII2526.API.Models
 
         }
 
-        public Bocadillo(int id, string nombre, decimal pVP, EnumTamaño tamano, int tipoPanId, string? resenyaBocadillo, List<CompraBocadillo> compraBocadillos, int stock, List<ResenyaBocadillo> resenyaBocadillos, TipoPan tipoPan)
+        public Bocadillo(int id, string nombre, decimal pVP, EnumTamaño tamano, int tipoPanId, List<CompraBocadillo> compraBocadillos, int stock, List<ResenyaBocadillo> resenyaBocadillos, TipoPan tipoPan)
         {
             Id = id;
             Nombre = nombre;
             PVP = pVP;
             Tamano = tamano;
             TipoPanId = tipoPanId;
-            ResenyaBocadillo = resenyaBocadillo;
             CompraBocadillos = compraBocadillos;
             Stock = stock;
             ResenyaBocadillos = resenyaBocadillos;
@@ -66,7 +64,6 @@ namespace AppForSEII2526.API.Models
                    PVP == bocadillo.PVP &&
                    Tamano == bocadillo.Tamano &&
                    TipoPanId == bocadillo.TipoPanId &&
-                   ResenyaBocadillo == bocadillo.ResenyaBocadillo &&
                    EqualityComparer<List<CompraBocadillo>>.Default.Equals(CompraBocadillos, bocadillo.CompraBocadillos) &&
                    Stock == bocadillo.Stock &&
                    EqualityComparer<List<ResenyaBocadillo>>.Default.Equals(ResenyaBocadillos, bocadillo.ResenyaBocadillos) &&
@@ -81,7 +78,6 @@ namespace AppForSEII2526.API.Models
             hash.Add(PVP);
             hash.Add(Tamano);
             hash.Add(TipoPanId);
-            hash.Add(ResenyaBocadillo);
             hash.Add(CompraBocadillos);
             hash.Add(Stock);
             hash.Add(ResenyaBocadillos);
