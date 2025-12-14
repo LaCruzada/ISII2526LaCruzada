@@ -191,11 +191,9 @@
     private string DialogOKMessage = string.Empty;
     private bool hiddenCarrito = true;
 
-    // Listas de productos
     private ICollection<AppForSEII2526.API.DTOs.DTOsCompraMerchandising.ProductoSelectDTO>? Productos { get; set; }
     private List<AppForSEII2526.API.DTOs.DTOsCompraMerchandising.ProductoSelectDTO> TodosLosProductos { get; set; } = new();
 
-    // Filtros
     private string tipoSelected = "All";
     private double? precioMin;
     private double? precioMax;
@@ -203,7 +201,6 @@
 
     private bool BotonComprarDisabled => !merchState.CarritoVisual.Any();
 
-    // 1. CAMBIO IMPORTANTE: Async para llamada a API
     protected override async Task OnInitializedAsync()
     {
         merchState.OnChange += StateHasChanged;
@@ -214,22 +211,17 @@
     {
         try
         {
-            // 2. LLAMADA REAL A LA API
-            // Pasamos null en los filtros para traer todo y filtrar en memoria (mantiene consistencia con estilo Samu)
             var resultadoApi = await apiClient.GetProductosDisponiblesAsync(null, null, null);
 
-            // 3. MAPEO DE DATOS
-            // Convertimos el DTO que viene de la API (generado) al DTO que usa tu aplicación (backend)
             TodosLosProductos = resultadoApi.Select(p => new AppForSEII2526.API.DTOs.DTOsCompraMerchandising.ProductoSelectDTO
             {
                 Id = p.Id,
                 Nombre = p.Nombre,
                 Tipo = p.Tipo,
-                Precio = (decimal)p.Precio, // Casteo importante si la API devuelve double
+                Precio = (decimal)p.Precio,
                 Stock = p.Stock
             }).ToList();
 
-            // Llenamos la lista visible
             AplicarFiltros();
         }
         catch (Exception ex)

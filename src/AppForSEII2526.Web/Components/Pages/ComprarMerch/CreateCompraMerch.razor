@@ -151,17 +151,15 @@
     private bool dialogoAbierto = false;
     private string? errorMessage;
 
-    // Clase auxiliar para deserializar la respuesta del backend
     private class RespuestaApiCompra
     {
         public string? Message { get; set; }
-        public int CompraId { get; set; } // Nombre debe coincidir con el JSON que devuelve tu controller
+        public int CompraId { get; set; }
         public decimal PrecioTotal { get; set; }
     }
 
     protected override void OnInitialized()
     {
-        // Redirigir si carrito vacío
         if (!StateContainer.CarritoVisual.Any())
         {
             VolverAlSelect();
@@ -187,10 +185,8 @@
         {
             try
             {
-                // 1. Preparar lista de productos agrupada para la API
                 var listaParaEnviar = new List<AppForSEII2526.Web.API.ProductoCantidadDTO>();
 
-                // Agrupamos visualmente por ID para sumar cantidades
                 var grupos = StateContainer.CarritoVisual.GroupBy(x => x.Id);
 
                 foreach (var grupo in grupos)
@@ -202,7 +198,6 @@
                     });
                 }
 
-                // 2. Construir DTO de envío (Cliente + Productos)
                 var compraParaApi = new AppForSEII2526.Web.API.ComprarMerchandisingCreateDTO
                 {
                     NombreCliente = pedido.NombreCliente,
@@ -214,20 +209,14 @@
                     Productos = listaParaEnviar
                 };
 
-                // 3. Llamada al Backend - Usar CrearCompra2Async para merchandising
                 await ApiClient.CrearCompra2Async(compraParaApi);
 
-                // Si llegamos aquí, es un 200 OK directo
                 Logger.LogInformation("Compra creada correctamente (200 OK).");
                 FinalizarPedidoExitoso();
-                // Nota: Tu controlador devuelve CreatedAtAction, pero ApiClient a veces no devuelve objeto si es void.
-                // Asumimos éxito y volvemos.
                 NavManager.NavigateTo("/merchandising/seleccionar");
             }
             catch (AppForSEII2526.Web.API.ApiException ex)
             {
-                // 4. Manejo del "Falso Error" 201 Created (Igual que tu compañero)
-                // NSwag a veces lanza excepción en 201 si espera void o un tipo distinto.
                 if (ex.StatusCode == 201 || (ex.Response != null && ex.Response.Contains("Compra realizada correctamente")))
                 {
                     try
@@ -239,8 +228,6 @@
                         {
                             Logger.LogInformation($"Compra {respuesta.CompraId} creada con éxito. Redirigiendo a detalle.");
                             FinalizarPedidoExitoso();
-                            // Redirigir a una página de "Ticket" si la tienes, o al inicio
-                            // NavManager.NavigateTo($"/merchandising/detallecompra?id={respuesta.CompraId}");
                             NavManager.NavigateTo("/merchandising/seleccionar");
                             return;
                         }
@@ -250,13 +237,11 @@
                         Logger.LogWarning("No se pudo leer el ID del JSON de respuesta.");
                     }
 
-                    // Fallback si no podemos leer el ID pero sabemos que fue éxito
                     FinalizarPedidoExitoso();
                     NavManager.NavigateTo("/merchandising/seleccionar");
                     return;
                 }
 
-                // Error Real
                 errorMessage = $"Error del servidor: {ex.Message}";
                 Logger.LogError(ex, "Error API Merchandising");
             }
@@ -270,6 +255,6 @@
 
     private void FinalizarPedidoExitoso()
     {
-        StateContainer.CompraProcesada(); // Limpia el carrito
+        StateContainer.CompraProcesada();
     }
 }
