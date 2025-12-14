@@ -1,10 +1,13 @@
 ﻿@page "/Resenya/Select"
-@using AppForSEII2526.API.DTOs.DTOsCrearResenya.BocadillosDTOs
-@using AppForSEII2526.API.Models
-@using AppForSEII2526.Web.StateContainers
-@inject ILogger<SeleccionarBocadillosResenya> Logger
+@using AppForSEII2526.Web.API
+@using AppForSEII2526.Web.Services
+@using AppForSEII2526.Web.Components
+@implements IDisposable
+
+@inject ILogger<SeleccionarBocadillosResenya> logger
 @inject StateContainerCrearResenya StateContainer
-@inject NavigationManager NavManager
+@inject NavigationManager navigation
+@inject AppForSEII2526APICLIENT ApiClient
 
 <h3>Seleccionar Bocadillos para la Reseña</h3>
 
@@ -27,7 +30,7 @@
                             <input type="number" class="form-control" @bind="filtroPVPMax" min="0" step="0.01" placeholder="Ej: 10,00" />
                         </div>
                         <div class="col-md-2">
-                            <button class="btn btn-primary w-100" @onclick="AplicarFiltros">
+                            <button class="btn btn-primary w-100" @onclick="BuscarBocadillos">
                                 Buscar
                             </button>
                         </div>
@@ -36,37 +39,47 @@
             </div>
 
             <div class="table-responsive">
-                <table class="table table-striped table-hover">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>Nombre</th>
-                            <th>Tipo Pan</th>
-                            <th>Tamaño</th>
-                            <th>Precio</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var bocadillo in BocadillosMostrados)
-                        {
-                            <tr>
-                                <td>@bocadillo.Nombre</td>
-                                <td>@bocadillo.TipoPanId</td>
-                                <td>@bocadillo.Tamano</td>
-                                <td>@bocadillo.PVP.ToString("0.00") €</td>
-                                <td>
-                                    <button class="btn btn-outline-success btn-sm"
-                                            @onclick="@(() => AddBocadillo(bocadillo))">
-                                        Añadir
-                                    </button>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-                @if (!BocadillosMostrados.Any())
+                @if (isLoading)
+                {
+                    <div class="text-center p-3">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <p>Cargando bocadillos...</p>
+                    </div>
+                }
+                else if (BocadillosMostrados == null || !BocadillosMostrados.Any())
                 {
                     <div class="alert alert-warning">No hay bocadillos que coincidan.</div>
+                }
+                else
+                {
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Tipo Pan</th>
+                                <th>Tamaño</th>
+                                <th>Precio</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var bocadillo in BocadillosMostrados)
+                            {
+                                <tr>
+                                    <td>@bocadillo.Nombre</td>
+                                    <td>@bocadillo.TipoPanId</td>
+                                    <td>@bocadillo.Tamano</td>
+                                    <td>@bocadillo.PVP.ToString("0.00") €</td>
+                                    <td>
+                                        <button class="btn btn-outline-success btn-sm"
+                                                @onclick="@(() => AddBocadillo(bocadillo))">
+                                            Añadir
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
                 }
             </div>
         </div>
@@ -78,14 +91,14 @@
                 </div>
                 <div class="card-body">
                     <ul class="list-group list-group-flush">
-                        @foreach (var item in StateContainer.Resenya.ResenyaBocadillos)
+                        @foreach (AppForSEII2526.Web.API.ResenyaBocadilloDTO item in StateContainer.Resenya.ResenyaBocadillos)
                         {
                             <li class="list-group-item d-flex justify-content-between align-items-center">
                                 <div>
                                     <strong>@item.Nombre</strong><br />
                                     <small>@item.Tamano</small>
                                 </div>
-                                <span>@item.PVP.ToString("0.00") €</span>
+                                <span>@item.Pvp.ToString("0.00") €</span>
                                 <button class="btn btn-danger btn-sm ms-2" @onclick="() => RemoveBocadillo(item)">X</button>
                             </li>
                         }
@@ -106,62 +119,69 @@
 </div>
 
 @code {
-    private List<BocadilloSeleccionadoDTO> TodosLosBocadillos = new List<BocadilloSeleccionadoDTO>();
-    private List<BocadilloSeleccionadoDTO> BocadillosMostrados = new List<BocadilloSeleccionadoDTO>();
+    private List<AppForSEII2526.API.DTOs.DTOsCrearResenya.BocadillosDTOs.BocadilloSeleccionadoDTO> TodosLosBocadillos = new List<AppForSEII2526.API.DTOs.DTOsCrearResenya.BocadillosDTOs.BocadilloSeleccionadoDTO>();
+    private ICollection<AppForSEII2526.API.DTOs.DTOsCrearResenya.BocadillosDTOs.BocadilloSeleccionadoDTO>? BocadillosMostrados;
     private string filtroNombre = "";
-    private decimal? filtroPVPMin = null;
-    private decimal? filtroPVPMax = null;
+    private double? filtroPVPMin = null;
+    private double? filtroPVPMax = null;
+    private bool isLoading = false;
 
     protected override void OnInitialized()
     {
         StateContainer.OnChange += StateHasChanged;
-
-        // Mock de datos, reemplaza por llamada a API si es necesario
-        TodosLosBocadillos = new List<BocadilloSeleccionadoDTO>
-        {
-            new BocadilloSeleccionadoDTO(1, "Vegetal", 3.50m, EnumTamaño.Normal, 1),
-            new BocadilloSeleccionadoDTO(2, "Jamón", 4.00m, EnumTamaño.Normal, 2),
-            new BocadilloSeleccionadoDTO(3, "Tortilla", 2.50m, EnumTamaño.Pequeño, 1)
-        };
-
-        AplicarFiltros();
     }
 
-    private void AplicarFiltros()
+    private async void BuscarBocadillos()
     {
-        var resultado = TodosLosBocadillos.AsEnumerable();
-
-        if (!string.IsNullOrWhiteSpace(filtroNombre))
+        string? nombreFiltro = string.IsNullOrWhiteSpace(filtroNombre) ? null : filtroNombre;
+        double? minFiltro = filtroPVPMin.HasValue && filtroPVPMin.Value > 0 ? filtroPVPMin : null;
+        double? maxFiltro = filtroPVPMax.HasValue && filtroPVPMax.Value > 0 ? filtroPVPMax : null;
+        isLoading = true;
+        try
         {
-            resultado = resultado.Where(b => b.Nombre.Contains(filtroNombre, StringComparison.OrdinalIgnoreCase));
-        }
+            // Llamada a la API con filtros
+            var bocadillosAPI = await ApiClient.GetBocadillosParaResenyaAsync(nombreFiltro, minFiltro, maxFiltro);
 
-        if (filtroPVPMin.HasValue && filtroPVPMin.Value > 0)
+            TodosLosBocadillos = bocadillosAPI.Select(b => new AppForSEII2526.API.DTOs.DTOsCrearResenya.BocadillosDTOs.BocadilloSeleccionadoDTO
+            {
+                Id = b.Id,
+                Nombre = b.Nombre,
+                TipoPanId = b.TipoPanId,
+                PVP= (decimal)b.Pvp,
+                Tamano = (AppForSEII2526.API.Models.EnumTamaño)b.Tamano,
+
+            }).ToList();
+        }
+        catch (Exception ex)
         {
-            resultado = resultado.Where(b => b.PVP >= filtroPVPMin.Value);
+            TodosLosBocadillos = new List<AppForSEII2526.API.DTOs.DTOsCrearResenya.BocadillosDTOs.BocadilloSeleccionadoDTO>();
+            BocadillosMostrados = TodosLosBocadillos;
+            logger.LogError(ex, "Error al cargar bocadillos desde la API");
         }
-
-        if (filtroPVPMax.HasValue && filtroPVPMax.Value > 0)
+        finally
         {
-            resultado = resultado.Where(b => b.PVP <= filtroPVPMax.Value);
+            isLoading = false;
         }
-
-        BocadillosMostrados = resultado.ToList();
+        StateHasChanged();
     }
 
-    private void AddBocadillo(BocadilloSeleccionadoDTO bocadillo)
+    private void AddBocadillo(AppForSEII2526.API.DTOs.DTOsCrearResenya.BocadillosDTOs.BocadilloSeleccionadoDTO bocadillo)
     {
         StateContainer.AgregarBocadilloParaResenya(bocadillo);
     }
 
-    private void RemoveBocadillo(ResenyaBocadilloDTO bocadillo)
+    private void RemoveBocadillo(ResenyaBocadilloDTO item)
     {
-        StateContainer.EliminarBocadilloParaResenya(bocadillo);
+        var bocadilloSelect = TodosLosBocadillos.FirstOrDefault(b => b.Id == item.BocadilloId);
+        if (bocadilloSelect != null)
+        {
+            StateContainer.EliminarBocadilloParaResenya(bocadilloSelect);
+        }
     }
 
     private void CrearResenya()
     {
-        NavManager.NavigateTo("/Resenya/Create");
+        navigation.NavigateTo("/Resenya/Create");
     }
 
     public void Dispose()

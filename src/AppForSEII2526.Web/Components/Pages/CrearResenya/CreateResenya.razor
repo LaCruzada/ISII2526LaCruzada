@@ -1,11 +1,11 @@
 ﻿@page "/Resenya/Create"
-@using AppForSEII2526.API.DTOs.DTOsCrearResenya.ResenyaDTOs
-@using AppForSEII2526.API.Models
-@using AppForSEII2526.Web.StateContainers
+@using AppForSEII2526.Web.Services
 @using AppForSEII2526.Web.Components.Layout
 @inject NavigationManager NavManager
 @inject StateContainerCrearResenya StateContainer
 @inject ILogger<CreateResenya> Logger
+@using AppForSEII2526.Web.API
+@inject AppForSEII2526APICLIENT apiclient
 
 <h3>Publicar Reseña</h3>
 <div class="container-fluid">
@@ -69,20 +69,18 @@
                     <tbody>
                         @for (int i = 0; i < resenya.ResenyaBocadillos.Count; i++)
                         {
-                            var bocadillo = resenya.ResenyaBocadillos[i];
+                            var bocadillo = resenya.ResenyaBocadillos.ElementAt(i);
+                            
                             <tr>
                                 <td>@bocadillo.Nombre</td>
                                 <td>@bocadillo.Tamano</td>
-                                <td>@bocadillo.PVP.ToString("0.00") €</td>
+                                <td>@bocadillo.Pvp.ToString("0.00") €</td>
                                 <td>
                                     <input type="number" class="form-control" min="1" max="10" @bind="bocadillo.Puntuacion" />
                                     @if (erroresBocadillos.ContainsKey(i) && !string.IsNullOrEmpty(erroresBocadillos[i]))
                                     {
                                         <div class="text-danger small">@erroresBocadillos[i]</div>
                                     }
-                                </td>
-                                <td>
-                                    <button type="button" class="btn btn-outline-danger btn-sm" @onclick="() => QuitarBocadillo(bocadillo)">Quitar</button>
                                 </td>
                             </tr>
                         }
@@ -112,7 +110,7 @@
 }
 
 @code {
-    private ResenyaForCreacionDTO resenya => StateContainer.Resenya;
+    private AppForSEII2526.Web.API.ResenyaForCreacionDTO resenya => StateContainer.Resenya;
     private bool dialogoAbierto = false;
     private string errorTitulo;
     private string errorDescripcion;
@@ -124,7 +122,7 @@
         set
         {
             if (int.TryParse(value, out int val))
-                resenya.ValoracionGeneral = (EnumValoracion_General)val;
+                resenya.ValoracionGeneral = (AppForSEII2526.Web.API.EnumValoracion_General)val;
             else
                 resenya.ValoracionGeneral = 0;
         }
@@ -139,12 +137,6 @@
     private void VolverASeleccion()
     {
         NavManager.NavigateTo("/Resenya/Select");
-    }
-
-    private void QuitarBocadillo(ResenyaBocadilloDTO bocadillo)
-    {
-        StateContainer.EliminarBocadilloParaResenya(bocadillo);
-        StateHasChanged();
     }
 
     private void ValidarYConfirmar()
@@ -172,7 +164,7 @@
         }
         for (int i = 0; i < resenya.ResenyaBocadillos.Count; i++)
         {
-            var bocadillo = resenya.ResenyaBocadillos[i];
+            var bocadillo = resenya.ResenyaBocadillos.ElementAt(i);
             if (bocadillo.Puntuacion < 1 || bocadillo.Puntuacion > 10)
             {
                 erroresBocadillos[i] = "La puntuación debe estar entre 1 y 10.";
