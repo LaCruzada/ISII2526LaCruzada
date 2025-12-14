@@ -18,10 +18,10 @@ builder.Services.AddScoped<IdentityUserAccessor>();
 builder.Services.AddScoped<IdentityRedirectManager>();
 builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
 
-
+builder.Services.AddScoped<MerchandisingStateContainer>();
 builder.Services.AddScoped<ComprarBonoStateContainer>();
 builder.Services.AddScoped<PedirBocadilloStateContainer>();
-builder.Services.AddScoped<MerchandisingStateContainer>();
+
 
 builder.Services.AddAuthentication(options =>
     {
