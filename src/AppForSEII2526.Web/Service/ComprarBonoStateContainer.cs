@@ -1,5 +1,4 @@
-﻿
-using AppForSEII2526.Web.API;
+﻿using AppForSEII2526.Web.API;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,7 +19,7 @@ namespace AppForSEII2526.Web.Services
 
         public double PrecioTotal => Compra.PrecioTotal;
 
-        public event Action? OnChange;      
+        public event Action? OnChange;
         private void NotifyStateChanged() => OnChange?.Invoke();
 
         public void AgregarBono(AppForSEII2526.API.ComprarBonoBocadilloDTOs.BonoSelectDTO bonoSeleccionado)

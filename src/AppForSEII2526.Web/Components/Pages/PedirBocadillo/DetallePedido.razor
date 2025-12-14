@@ -2,23 +2,30 @@
 
 @using AppForSEII2526.API.DTOs.DTOsPedirBocadillo
 @inject NavigationManager NavManager
+@inject AppForSEII2526.Web.API.AppForSEII2526APICLIENT ApiClient
 
 <h3>Detalles del Pedido</h3>
 
 <div class="container-fluid">
-
     @if (!string.IsNullOrEmpty(error))
     {
-        <div class="alert alert-danger">@error</div>
+        <div class="alert alert-danger">
+            <strong>Error:</strong> @error
+            <br />
+            <button class="btn btn-sm btn-outline-danger mt-2" @onclick="Volver">Volver</button>
+        </div>
     }
     else if (pedido == null)
     {
-        <p><em>Cargando detalles...</em></p>
+        <div class="text-center p-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p>Conectando con la base de datos...</p>
+        </div>
     }
     else
     {
-        <div class="card mb-4">
-            <div class="card-header bg-light">Información General</div>
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-primary text-white">Información General</div>
             <div class="card-body">
                 <table class="table table-borderless table-sm">
                     <tr>
@@ -27,7 +34,7 @@
                     </tr>
                     <tr>
                         <th>Cliente:</th>
-                        <td>@pedido.NombreCliente</td>
+                        <td id="detalleNombreCliente">@pedido.NombreCliente</td>
                     </tr>
                     <tr>
                         <th>Fecha Compra:</th>
@@ -40,7 +47,6 @@
                 </table>
             </div>
         </div>
-
         <h4>Bocadillos Comprados</h4>
         <div class="table-responsive">
             <table class="table table-striped table-hover">
@@ -75,7 +81,6 @@
                 </tfoot>
             </table>
         </div>
-
         <div class="mt-3">
             <button class="btn btn-secondary" @onclick="Volver">Volver al Listado</button>
         </div>
@@ -89,54 +94,47 @@
     private PedidoBocadilloDetailsDTO? pedido;
     private string error = "";
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         if (Id <= 0)
         {
-            error = "Error: No se ha especificado un pedido válido.";
+            error = "Error: No se ha especificado un ID de pedido válido.";
             return;
         }
 
         try
         {
-            pedido = new PedidoBocadilloDetailsDTO
+            var pedidoGenerado = await ApiClient.GetPedidoAsync(Id);
+            if (pedidoGenerado != null)
             {
-                PedidoId = Id,
-                NombreCliente = "Juan Pérez García",
-                FechaCompra = DateTime.Now.AddHours(-2),
-                MetodoPago = "Tarjeta",
-
-                Bocadillos = new List<BocadilloItemDTO>
+                pedido = new PedidoBocadilloDetailsDTO
                 {
-                    new BocadilloItemDTO
-                    {
-                        BocadilloId = 1,
-                        NombreBocadillo = "Bocadillo de Lomo",
-                        TipoPan = "Barra",
-                        Cantidad = 2,
-                        PrecioUnitario = 6.50m
-                    },
-                    new BocadilloItemDTO
-                    {
-                        BocadilloId = 2,
-                        NombreBocadillo = "Vegetal",
-                        TipoPan = "Integral",
-                        Cantidad = 1,
-                        PrecioUnitario = 4.00m
-                    }
-                }
-            };
+                    PedidoId = pedidoGenerado.PedidoId,
+                    NombreCliente = pedidoGenerado.NombreCliente,
+                    FechaCompra = pedidoGenerado.FechaCompra.DateTime,
+                    MetodoPago = pedidoGenerado.MetodoPago,
+                    PrecioTotal = (decimal)pedidoGenerado.PrecioTotal,
+                    Bocadillos = new List<BocadilloItemDTO>()
+                };
 
-            pedido.PrecioTotal = pedido.Bocadillos.Sum(b => b.PrecioUnitario * b.Cantidad);
+                foreach (var item in pedidoGenerado.Bocadillos)
+                {
+                    pedido.Bocadillos.Add(new BocadilloItemDTO
+                    {
+                        BocadilloId = item.BocadilloId,
+                        NombreBocadillo = item.NombreBocadillo,
+                        TipoPan = item.TipoPan,
+                        Cantidad = item.Cantidad,
+                        PrecioUnitario = (decimal)item.PrecioUnitario
+                    });
+                }
+            }
         }
         catch (Exception ex)
         {
-            error = "Ocurrió un error al cargar el pedido.";
+            error = "No se pudo cargar el pedido. Verifica que la API está encendida. " + ex.Message;
+            pedido = null;
         }
     }
-
-    private void Volver()
-    {
-        NavManager.NavigateTo("/PedirBocadillo/SelectPedirBocadillo");
-    }
+    private void Volver() => NavManager.NavigateTo("/PedirBocadillo/SeleccionarPedirBocadillo");
 }

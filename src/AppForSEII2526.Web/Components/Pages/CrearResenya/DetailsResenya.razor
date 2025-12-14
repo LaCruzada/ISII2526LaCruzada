@@ -1,0 +1,98 @@
+﻿@page "/Resenya/Details"
+@using AppForSEII2526.Web.API
+@using AppForSEII2526.Web.Services
+@inject AppForSEII2526APICLIENT ApiClient
+@inject NavigationManager navigation
+
+<h3>Detalle de la Reseña</h3>
+
+@if (resenya == null)
+{
+    <p>@error</p>
+}
+else
+{
+    <div class="container-fluid">
+        <table class="table table-borderless table-sm">
+            <tr>
+                <th>Usuario</th>
+                <td>@(string.IsNullOrEmpty(resenya.NombreUsuario) ? "Anónimo" : resenya.NombreUsuario)</td>
+            </tr>
+            <tr>
+                <th>Título</th>
+                <td>@resenya.Titulo</td>
+            </tr>
+            <tr>
+                <th>Descripción</th>
+                <td>@resenya.Descripcion</td>
+            </tr>
+            <tr>
+                <th>Valoración general</th>
+                <td>@resenya.Valoracion_General</td>
+            </tr>
+            <tr>
+                <th>Fecha de publicación</th>
+                <td>@resenya.FechaPublicacion.ToString("dd/MM/yyyy HH:mm:ss")</td>
+            </tr>
+        </table>
+
+        <h4>Bocadillos evaluados</h4>
+
+        <table class="table table-striped">
+            <thead class="table-dark">
+                <tr>
+                    <th>Nombre</th>
+                    <th>Tamaño</th>
+                    <th>Precio</th>
+                    <th>Valoración</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in resenya.ResenyaBocadillos)
+                {
+                    <tr>
+                        <td>@item.Nombre</td>
+                        <td>@item.Tamano</td>
+                        <td>@item.Pvp.ToString("0.00") €</td>
+                        <td>@item.Puntuacion</td>
+                    </tr>
+                }
+                @if (!resenya.ResenyaBocadillos.Any())
+                {
+                    <tr>
+                        <td colspan="4" class="text-center text-muted">No hay bocadillos evaluados</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <button class="btn btn-secondary mt-3" @onclick="Volver">Volver</button>
+    </div>
+}
+
+@code {
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public int ResenyaId { get; set; }
+
+    private ResenyaDetallesDTO? resenya;
+    private string error = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            resenya = await ApiClient.GetResenyaAsync(ResenyaId);
+        }
+        catch (ApiException)
+        {
+            resenya = null;
+            error = $"Error! No existe una reseña con id={ResenyaId}";
+        }
+    }
+
+    private void Volver()
+    {
+        navigation.NavigateTo("/Resenya/Select");
+    }
+}
