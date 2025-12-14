@@ -6,7 +6,6 @@ using AppForSEII2526.Web.Components.Account;
 using AppForSEII2526.Web.Data;
 using AppForSEII2526.Web.API;
 using AppForSEII2526.Web.Services;
-using AppForSEII2526.Web.StateContainers;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -19,7 +18,6 @@ builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IdentityUserAccessor>();
 builder.Services.AddScoped<IdentityRedirectManager>();
 builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
-builder.Services.AddScoped<StateContainerCrearResenya>();
 
 builder.Services.AddAuthentication(options =>
 {
@@ -57,6 +55,7 @@ builder.Services.AddScoped<AppForSEII2526APICLIENT>(sp =>
 //https://learn.microsoft.com/en-us/aspnet/core/blazor/state-management/?view=aspnetcore-8.0#in-memory-state-container-service
 builder.Services.AddScoped<ComprarBonoStateContainer>();
 builder.Services.AddScoped<PedirBocadilloStateContainer>();
+builder.Services.AddScoped<StateContainerCrearResenya>();
 
 var app = builder.Build();
 

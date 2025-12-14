@@ -1,15 +1,13 @@
-﻿using AppForSEII2526.API.DTOs.DTOsCrearResenya.BocadillosDTOs;
-using AppForSEII2526.API.DTOs.DTOsCrearResenya.ResenyaDTOs;
-using AppForSEII2526.API.Models;
+﻿using AppForSEII2526.Web.API;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace AppForSEII2526.Web.StateContainers
+namespace AppForSEII2526.Web.Services
 {
     public class StateContainerCrearResenya
     {
-        public ResenyaForCreacionDTO Resenya { get; private set; } = new ResenyaForCreacionDTO()
+        public ResenyaForCreacionDTO Resenya { get; private set; } = new ResenyaForCreacionDTO
         {
             NombreUsuario = "",
             Titulo = "",
@@ -22,7 +20,7 @@ namespace AppForSEII2526.Web.StateContainers
         public event Action? OnChange;
         private void NotifyStateChanged() => OnChange?.Invoke();
 
-        public void AgregarBocadilloParaResenya(BocadilloSeleccionadoDTO bocadillo)
+        public void AgregarBocadilloParaResenya(AppForSEII2526.API.DTOs.DTOsCrearResenya.BocadillosDTOs.BocadilloSeleccionadoDTO bocadillo)
         {
             if (!Resenya.ResenyaBocadillos.Any(b => b.BocadilloId == bocadillo.Id))
             {
@@ -30,18 +28,22 @@ namespace AppForSEII2526.Web.StateContainers
                 {
                     BocadilloId = bocadillo.Id,
                     Nombre = bocadillo.Nombre,
-                    PVP = bocadillo.PVP,
-                    Tamano = bocadillo.Tamano,
+                    Pvp = (double)bocadillo.PVP,
+                    Tamano = (EnumTamaño)bocadillo.Tamano,
                     Puntuacion = 1
                 });
                 NotifyStateChanged();
             }
         }
 
-        public void EliminarBocadilloParaResenya(ResenyaBocadilloDTO bocadillo)
+        public void EliminarBocadilloParaResenya(AppForSEII2526.API.DTOs.DTOsCrearResenya.BocadillosDTOs.BocadilloSeleccionadoDTO bocadillo)
         {
-            Resenya.ResenyaBocadillos.Remove(bocadillo);
-            NotifyStateChanged();
+            if (Resenya.ResenyaBocadillos.Any(b => b.BocadilloId == bocadillo.Id))
+            {
+                var itemAEliminar = Resenya.ResenyaBocadillos.First(b => b.BocadilloId == bocadillo.Id);
+                Resenya.ResenyaBocadillos.Remove(itemAEliminar);
+                NotifyStateChanged();
+            }
         }
 
         public void LimpiarCarritoResenya()
