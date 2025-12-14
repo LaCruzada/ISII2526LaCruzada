@@ -1,0 +1,313 @@
+﻿@page "/merchandising/seleccionar"
+@using AppForSEII2526.Web.API
+@using AppForSEII2526.Web.Services
+@using AppForSEII2526.Web.Components
+@implements IDisposable
+
+@inject ILogger<SeleccionarCompraMerch> logger
+@inject MerchandisingStateContainer merchState
+@inject NavigationManager navigation
+
+<div class="container py-5">
+    
+    <div class="d-flex justify-content-between align-items-end mb-4 border-bottom pb-3">
+        <div>
+            <h2 class="fw-light m-0">Merchandising</h2>
+            <p class="text-muted small m-0">Selecciona tus productos favoritos</p>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+            <div class="text-end d-none d-md-block">
+                <div class="fw-bold">@merchState.CarritoVisual.Count art.</div>
+                <div class="text-muted small">@merchState.PrecioTotal.ToString("F2") €</div>
+            </div>
+            <button class="btn btn-dark rounded-0 px-4 py-2" id="ComprarMerch" @onclick="@ComprarMerch" disabled="@BotonComprarDisabled">
+                TRAMITAR PEDIDO
+            </button>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <button class="btn btn-link text-secondary text-decoration-none p-0" id="showCarrito" @onclick="@ToggleCarrito">
+            <i class="bi bi-cart"></i> @(hiddenCarrito ? "Ver mi cesta" : "Ocultar cesta")
+        </button>
+    </div>
+
+    <div class="bg-light p-4 mb-5 rounded-3" hidden="@hiddenCarrito">
+        <h5 class="mb-3 fw-light">Tu Cesta</h5>
+        @if (merchState.CarritoVisual.Any())
+        {
+            <div class="row g-3">
+                @foreach (var grupo in merchState.CarritoVisual.GroupBy(x => x.Id))
+                {
+                    var item = grupo.First();
+                    var cantidad = grupo.Count();
+                    var subtotal = item.Precio * cantidad;
+
+                    <div class="col-md-4 col-lg-3">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body">
+                                <h6 class="card-title fw-bold">@item.Nombre</h6>
+                                <div class="small text-muted mb-2">@item.Tipo</div>
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span class="badge bg-secondary text-white rounded-pill">x @cantidad</span>
+                                    <span class="fw-bold">@subtotal.ToString("F2") €</span>
+                                </div>
+                                <button class="btn btn-outline-secondary btn-sm w-100 rounded-0" @onclick="@(() => RemoveMerchItem(item))">
+                                    - Quitar uno
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+            <div class="text-end mt-4 pt-3 border-top border-secondary">
+                <span class="text-muted me-2">Total estimado:</span>
+                <span class="h4 fw-bold">@merchState.PrecioTotal.ToString("F2") €</span>
+            </div>
+        }
+        else
+        {
+            <div class="text-center text-muted py-3">Tu carrito está vacío actualmente.</div>
+        }
+    </div>
+
+    <div class="card border-0 bg-light mb-5">
+        <div class="card-body p-4">
+            <h6 class="text-uppercase text-muted mb-3 small ls-1">Filtrar Catálogo</h6>
+            <div class="row g-2 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label small text-muted">Tipo de producto</label>
+                    <select class="form-select border-0 bg-white" @bind="tipoSelected" id="selectTipo">
+                        <option value="All" selected>Ver todos</option>
+                        @foreach (string t in tiposDisponibles)
+                        {
+                            <option value="@t">@t</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small text-muted">Precio Mín (€)</label>
+                    <input type="number" class="form-control border-0 bg-white" @bind="precioMin" placeholder="0">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small text-muted">Precio Máx (€)</label>
+                    <input type="number" class="form-control border-0 bg-white" @bind="precioMax" placeholder="Sin límite">
+                </div>
+                <div class="col-md-3">
+                    <button class="btn btn-dark w-100 rounded-0" id="searchMerch" @onclick="@BuscarMerch">
+                        Aplicar Filtros
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        @if (Productos == null)
+        {
+            <div class="text-center py-5 text-muted">Cargando catálogo...</div>
+        }
+        else if (!Productos.Any())
+        {
+            <div class="text-center py-5">
+                <h5 class="fw-light">No se encontraron productos.</h5>
+                <p class="text-muted">Prueba a ajustar tus filtros de búsqueda.</p>
+            </div>
+        }
+        else
+        {
+            <table class="table table-hover align-middle" id="TableOfMerch">
+                <thead class="text-muted small text-uppercase border-bottom">
+                    <tr>
+                        <th class="fw-normal border-0 ps-3">Producto</th>
+                        <th class="fw-normal border-0">Tipo</th>
+                        <th class="fw-normal border-0">Precio</th>
+                        <th class="fw-normal border-0 text-center">Stock</th>
+                        <th class="fw-normal border-0 text-end pe-3">Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var prod in Productos)
+                    {
+                        var cantidadEnCarrito = CantidadEnCarrito(prod.Id);
+                        var sinStock = prod.Stock <= 0 || cantidadEnCarrito >= prod.Stock;
+                        
+                        <tr class="bg-white border-bottom" id="MerchData_@prod.Id">
+                            <td class="py-3 ps-3 fw-bold">@prod.Nombre</td>
+                            <td class="py-3 text-muted">@prod.Tipo</td>
+                            <td class="py-3">@prod.Precio.ToString("F2") €</td>
+                            <td class="py-3 text-center">
+                                @if (prod.Stock < 5 && prod.Stock > 0)
+                                {
+                                    <span class="text-dark fw-bold small">¡Últimas @prod.Stock!</span>
+                                }
+                                else if (prod.Stock == 0)
+                                {
+                                    <span class="text-muted text-decoration-line-through">Agotado</span>
+                                }
+                                else
+                                {
+                                    <span class="text-secondary">@prod.Stock</span>
+                                }
+                            </td>
+                            <td class="py-3 text-end pe-3">
+                                @if (cantidadEnCarrito > 0)
+                                {
+                                    <span class="me-2 small text-muted">(@cantidadEnCarrito en cesta)</span>
+                                }
+                                <button class="btn btn-outline-dark btn-sm rounded-0 px-3" 
+                                        id="merchToAdd_@prod.Id" 
+                                        @onclick="@(() => AddProducto(prod))"
+                                        disabled="@sinStock">
+                                    @(sinStock && prod.Stock > 0 ? "Máx." : "Añadir")
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>
+
+@if (DialogOKIsOpen)
+{
+    <div class="modal fade show d-block" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 rounded-0 shadow">
+                <div class="modal-body text-center p-5">
+                    <h5 class="mb-3">Atención</h5>
+                    <p class="text-muted mb-4">@DialogOKMessage</p>
+                    <button type="button" class="btn btn-dark rounded-0 px-4" @onclick="OnDialogOKClose">Entendido</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+@code {
+    private bool DialogOKIsOpen;
+    private string DialogOKMessage = string.Empty;
+    private bool hiddenCarrito = true;
+
+    private ICollection<AppForSEII2526.API.DTOs.DTOsCompraMerchandising.ProductoSelectDTO>? Productos { get; set; }
+
+    private List<AppForSEII2526.API.DTOs.DTOsCompraMerchandising.ProductoSelectDTO> TodosLosProductos { get; set; } = new();
+
+    private string tipoSelected = "All";
+    private double? precioMin;
+    private double? precioMax;
+    private List<string> tiposDisponibles = new List<string> { "Camiseta", "Taza", "Gorra", "Sudadera" };
+
+    private bool BotonComprarDisabled => !merchState.CarritoVisual.Any();
+
+    protected override void OnInitialized()
+    {
+        merchState.OnChange += StateHasChanged;
+        CargarDatosIniciales();
+    }
+
+    private void CargarDatosIniciales()
+    {
+        try
+        {
+            TodosLosProductos = new List<AppForSEII2526.API.DTOs.DTOsCompraMerchandising.ProductoSelectDTO>
+            {
+                new AppForSEII2526.API.DTOs.DTOsCompraMerchandising.ProductoSelectDTO
+                    { Id = 1, Nombre = "Camiseta Logo", Tipo = "Camiseta", Precio = 15.00m, Stock = 10 },
+                new AppForSEII2526.API.DTOs.DTOsCompraMerchandising.ProductoSelectDTO
+                    { Id = 2, Nombre = "Taza Café", Tipo = "Taza", Precio = 8.50m, Stock = 5 },
+                new AppForSEII2526.API.DTOs.DTOsCompraMerchandising.ProductoSelectDTO
+                    { Id = 3, Nombre = "Gorra Negra", Tipo = "Gorra", Precio = 12.00m, Stock = 20 },
+                new AppForSEII2526.API.DTOs.DTOsCompraMerchandising.ProductoSelectDTO
+                    { Id = 4, Nombre = "Sudadera Capucha", Tipo = "Sudadera", Precio = 35.00m, Stock = 0 },
+                 new AppForSEII2526.API.DTOs.DTOsCompraMerchandising.ProductoSelectDTO
+                    { Id = 5, Nombre = "Camiseta Vintage", Tipo = "Camiseta", Precio = 18.00m, Stock = 3 }
+            };
+
+            AplicarFiltros();
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error al cargar productos");
+            OpenDialogOK("Error al cargar los productos.");
+            Productos = new List<AppForSEII2526.API.DTOs.DTOsCompraMerchandising.ProductoSelectDTO>();
+        }
+    }
+
+    private void BuscarMerch()
+    {
+        AplicarFiltros();
+    }
+
+    private void AplicarFiltros()
+    {
+        IEnumerable<AppForSEII2526.API.DTOs.DTOsCompraMerchandising.ProductoSelectDTO> query = TodosLosProductos;
+
+        if (tipoSelected != "All")
+        {
+            query = query.Where(p => p.Tipo.Equals(tipoSelected, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (precioMin.HasValue)
+        {
+            query = query.Where(p => p.Precio >= (decimal)precioMin.Value);
+        }
+
+        if (precioMax.HasValue)
+        {
+            query = query.Where(p => p.Precio <= (decimal)precioMax.Value);
+        }
+
+        Productos = query.ToList();
+    }
+
+    private void AddProducto(AppForSEII2526.API.DTOs.DTOsCompraMerchandising.ProductoSelectDTO prod)
+    {
+        var cantidadActual = CantidadEnCarrito(prod.Id);
+        if (cantidadActual >= prod.Stock)
+        {
+            OpenDialogOK($"No puedes añadir más unidades de '{prod.Nombre}'. Stock máximo: {prod.Stock}");
+            return;
+        }
+
+        merchState.AgregarProducto(prod);
+        if (hiddenCarrito) hiddenCarrito = false;
+    }
+
+    private void RemoveMerchItem(AppForSEII2526.API.DTOs.DTOsCompraMerchandising.ProductoSelectDTO item)
+    {
+        merchState.EliminarProducto(item);
+        if (!merchState.CarritoVisual.Any()) hiddenCarrito = true;
+    }
+
+    private int CantidadEnCarrito(int id)
+    {
+        return merchState.CarritoVisual.Count(p => p.Id == id);
+    }
+
+    private void ToggleCarrito()
+    {
+        hiddenCarrito = !hiddenCarrito;
+    }
+
+    private void ComprarMerch()
+    {
+        navigation.NavigateTo("/merchandising/crearcompra");
+    }
+
+    private void OpenDialogOK(string message)
+    {
+        DialogOKIsOpen = true;
+        DialogOKMessage = message;
+    }
+
+    private void OnDialogOKClose()
+    {
+        DialogOKIsOpen = false;
+    }
+
+    public void Dispose()
+    {
+        merchState.OnChange -= StateHasChanged;
+    }
+}

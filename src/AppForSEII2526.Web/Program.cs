@@ -45,7 +45,7 @@ var apiBaseUrl = builder.Configuration["ApiBaseUrl"];
 
 if (string.IsNullOrWhiteSpace(apiBaseUrl))
 {
-    throw new InvalidOperationException("ApiBaseUrl no est· configurado en appsettings.json");
+    throw new InvalidOperationException("ApiBaseUrl no est√° configurado en appsettings.json");
 }
 
 builder.Services.AddScoped<AppForSEII2526APICLIENT>(sp =>
@@ -56,6 +56,7 @@ builder.Services.AddScoped<AppForSEII2526APICLIENT>(sp =>
 builder.Services.AddScoped<ComprarBonoStateContainer>();
 builder.Services.AddScoped<PedirBocadilloStateContainer>();
 builder.Services.AddScoped<StateContainerCrearResenya>();
+builder.Services.AddScoped<MerchandisingStateContainer>();
 
 var app = builder.Build();
 
