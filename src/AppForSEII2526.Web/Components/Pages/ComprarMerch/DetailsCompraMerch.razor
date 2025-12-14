@@ -1,0 +1,122 @@
+﻿@page "/merchandising/detallecompra"
+@using AppForSEII2526.Web.API
+@inject AppForSEII2526APICLIENT ApiClient
+@inject NavigationManager Navigation
+
+<div class="container py-5">
+
+    <div class="d-flex justify-content-between align-items-end mb-4 border-bottom pb-3">
+        <div>
+            <h2 class="fw-light m-0">Detalles del Pedido</h2>
+            <p class="text-muted small m-0">Resumen de la compra #@Id</p>
+        </div>
+        <button class="btn btn-outline-dark rounded-0 px-4" @onclick="Volver">
+            <i class="bi bi-arrow-left"></i> Volver
+        </button>
+    </div>
+
+    @if (compra == null)
+    {
+        @if (!string.IsNullOrEmpty(error))
+        {
+            <div class="alert alert-danger rounded-0 border-0 shadow-sm">@error</div>
+        }
+        else
+        {
+            <div class="text-center py-5">
+                <div class="spinner-border text-secondary" role="status"></div>
+                <p class="text-muted mt-3">Cargando datos...</p>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="container-fluid p-0">
+            <div class="card border-0 bg-light mb-5">
+                <div class="card-body p-4">
+                    <h6 class="text-uppercase text-muted small ls-1 mb-3">Datos Generales</h6>
+                    <table class="table table-borderless table-sm mb-0">
+                        <tr>
+                            <th class="text-muted fw-normal" style="width: 200px;">Cliente</th>
+                            <td class="fw-bold">@compra.NombreCliente</td>
+                        </tr>
+                        <tr>
+                            <th class="text-muted fw-normal">Dirección de Envío</th>
+                            <td>@compra.DireccionEnvio</td>
+                        </tr>
+                        <tr>
+                            <th class="text-muted fw-normal">Método de Pago</th>
+                            <td>@compra.MetodoPago</td>
+                        </tr>
+                        <tr>
+                            <th class="text-muted fw-normal">Fecha de Compra</th>
+                            <td>@compra.FechaCompra.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <h5 class="fw-light mb-3">Productos Comprados</h5>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle" id="ProductosComprados">
+                    <thead class="text-muted small text-uppercase border-bottom">
+                        <tr>
+                            <th scope="col" class="border-0 ps-3">Nombre</th>
+                            <th scope="col" class="border-0">Tipo</th>
+                            <th scope="col" class="border-0 text-center">Cantidad</th>
+                            <th scope="col" class="border-0 text-end pe-3">Precio Unitario</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in compra.Productos)
+                        {
+                            <tr class="bg-white border-bottom">
+                                <td class="ps-3 fw-bold">@item.Nombre</td>
+                                <td class="text-muted">@item.Tipo</td>
+                                <td class="text-center">@item.Cantidad</td>
+                                <td class="text-end pe-3">@item.PrecioUnitario.ToString("F2") €</td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot class="bg-light">
+                        <tr>
+                            <td colspan="3" class="text-end py-3 text-muted text-uppercase small">Precio Total:</td>
+                            <td class="text-end py-3 pe-3 h4 fw-bold m-0">@compra.PrecioTotal.ToString("F2") €</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public int Id { get; set; }
+
+    private CompraMerchandisingDetailsDTO? compra;
+    private string error = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            compra = await ApiClient.GetCompra2Async(Id);
+        }
+        catch (ApiException ex)
+        {
+            compra = null;
+            error = $"Error! No existe una compra con id={Id}. (Código: {ex.StatusCode})";
+        }
+        catch (Exception)
+        {
+            error = "Error inesperado al conectar con el servidor.";
+        }
+    }
+
+    private void Volver()
+    {
+        Navigation.NavigateTo("/merchandising/seleccionar");
+    }
+}
