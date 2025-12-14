@@ -1,0 +1,260 @@
+﻿@page "/merchandising/crearcompra"
+
+@using AppForSEII2526.API.DTOs.DTOsCompraMerchandising
+@using AppForSEII2526.Web.Services
+@using AppForSEII2526.Web.Components.Layout
+@using System.Text.Json
+
+@inject NavigationManager NavManager
+@inject MerchandisingStateContainer StateContainer
+@inject ILogger<CreateCompraMerch> Logger
+@inject AppForSEII2526.Web.API.AppForSEII2526APICLIENT ApiClient
+
+<h3>Finalizar Pedido</h3>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <strong>Ocurrió un error al procesar el pedido:</strong> @errorMessage
+        <button type="button" class="btn-close" @onclick="() => errorMessage = null"></button>
+    </div>
+}
+
+<EditForm Model="pedido" OnValidSubmit="AbrirDialogoConfirmacion">
+    <DataAnnotationsValidator />
+
+    <div class="container-fluid py-3">
+        <div class="row">
+            <div class="col-lg-7">
+                <div class="card mb-4 border-0 shadow-sm">
+                    <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
+                        <h5 class="fw-light text-uppercase ls-1">Datos de Envío</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted">Nombre</label>
+                                <InputText @bind-Value="pedido.NombreCliente" class="form-control bg-light border-0" placeholder="Ej: Ana" />
+                                <ValidationMessage For="@(() => pedido.NombreCliente)" />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted">Primer Apellido</label>
+                                <InputText @bind-Value="pedido.Apellido1Cliente" class="form-control bg-light border-0" placeholder="Ej: García" />
+                                <ValidationMessage For="@(() => pedido.Apellido1Cliente)" />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted">Segundo Apellido (Opcional)</label>
+                                <InputText @bind-Value="pedido.Apellido2Cliente" class="form-control bg-light border-0" placeholder="Ej: Pérez" />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted">Email</label>
+                                <InputText @bind-Value="pedido.EmailCliente" class="form-control bg-light border-0" placeholder="correo@ejemplo.com" />
+                                <ValidationMessage For="@(() => pedido.EmailCliente)" />
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label small text-muted">Dirección Completa</label>
+                                <InputText @bind-Value="pedido.DireccionEnvio" class="form-control bg-light border-0" placeholder="C/ Ejemplo, 123, 1ºA" />
+                                <ValidationMessage For="@(() => pedido.DireccionEnvio)" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4 border-0 shadow-sm">
+                    <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
+                        <h5 class="fw-light text-uppercase ls-1">Pago</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="col-md-6">
+                            <label class="form-label small text-muted">Método de Pago</label>
+                            <InputSelect class="form-select bg-light border-0" @bind-Value="pedido.MetodoPago">
+                                <option value="Tarjeta">Tarjeta de Crédito</option>
+                                <option value="Paypal">PayPal</option>
+                                <option value="GooglePay">Google Pay</option>
+                            </InputSelect>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-5">
+                <div class="card border-0 bg-light p-4 sticky-top" style="top: 20px;">
+                    <h5 class="mb-4 fw-light">Resumen del Pedido</h5>
+
+                    <div class="table-responsive mb-3">
+                        <table class="table table-borderless align-middle">
+                            <thead class="text-muted small text-uppercase border-bottom">
+                                <tr>
+                                    <th>Producto</th>
+                                    <th class="text-end">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in StateContainer.CarritoVisual)
+                                {
+                                    <tr class="border-bottom">
+                                        <td>
+                                            <div class="fw-bold">@item.Nombre</div>
+                                            <div class="small text-muted">@item.Tipo <span class="mx-1">|</span> 1 ud.</div>
+                                        </td>
+                                        <td class="text-end">@item.Precio.ToString("F2") €</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mb-4 mt-4 pt-3 border-top border-secondary">
+                        <span class="h5 m-0 fw-light">Total a pagar</span>
+                        <span class="h3 fw-bold m-0">@StateContainer.PrecioTotal.ToString("F2") €</span>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-dark btn-lg rounded-0 py-3" disabled="@(!StateContainer.CarritoVisual.Any())">
+                            CONFIRMAR Y PAGAR
+                        </button>
+
+                        <button type="button" class="btn btn-outline-secondary border-0" @onclick="VolverAlSelect">
+                            ← Volver atrás
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</EditForm>
+
+@if (dialogoAbierto)
+{
+    <div class="modal fade show d-block" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 rounded-0 shadow">
+                <div class="modal-body text-center p-5">
+                    <h4 class="mb-3 fw-light">Confirmar Pedido</h4>
+                    <p class="text-muted mb-4">¿Estás seguro de que deseas realizar la compra por @StateContainer.PrecioTotal.ToString("F2") €?</p>
+                    <div class="d-flex justify-content-center gap-3">
+                        <button class="btn btn-outline-secondary px-4 rounded-0" @onclick="() => AlCerrarDialogo(false)">Cancelar</button>
+                        <button class="btn btn-dark px-4 rounded-0" @onclick="() => AlCerrarDialogo(true)">Confirmar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private ComprarMerchandisingCreateDTO pedido => StateContainer.Compra;
+    private bool dialogoAbierto = false;
+    private string? errorMessage;
+
+    private class RespuestaApiCompra
+    {
+        public string? Message { get; set; }
+        public int CompraId { get; set; }
+        public decimal PrecioTotal { get; set; }
+    }
+
+    protected override void OnInitialized()
+    {
+        if (!StateContainer.CarritoVisual.Any())
+        {
+            VolverAlSelect();
+            return;
+        }
+
+        if (string.IsNullOrEmpty(pedido.MetodoPago)) pedido.MetodoPago = "Tarjeta";
+    }
+
+    private void VolverAlSelect() => NavManager.NavigateTo("/merchandising/seleccionar");
+
+    private void AbrirDialogoConfirmacion()
+    {
+        errorMessage = null;
+        dialogoAbierto = true;
+    }
+
+    private async Task AlCerrarDialogo(bool aceptado)
+    {
+        dialogoAbierto = false;
+
+        if (aceptado)
+        {
+            try
+            {
+                var listaParaEnviar = new List<AppForSEII2526.Web.API.ProductoCantidadDTO>();
+
+                var grupos = StateContainer.CarritoVisual.GroupBy(x => x.Id);
+
+                foreach (var grupo in grupos)
+                {
+                    listaParaEnviar.Add(new AppForSEII2526.Web.API.ProductoCantidadDTO
+                    {
+                        ProductoId = grupo.Key,
+                        Cantidad = grupo.Count()
+                    });
+                }
+
+                var compraParaApi = new AppForSEII2526.Web.API.ComprarMerchandisingCreateDTO
+                {
+                    NombreCliente = pedido.NombreCliente,
+                    Apellido1Cliente = pedido.Apellido1Cliente,
+                    Apellido2Cliente = pedido.Apellido2Cliente ?? "",
+                    EmailCliente = pedido.EmailCliente,
+                    DireccionEnvio = pedido.DireccionEnvio,
+                    MetodoPago = pedido.MetodoPago,
+                    Productos = listaParaEnviar
+                };
+
+                await ApiClient.CrearCompra2Async(compraParaApi);
+
+                Logger.LogInformation("Compra creada correctamente (200 OK).");
+                FinalizarPedidoExitoso();
+                NavManager.NavigateTo("/merchandising/seleccionar");
+            }
+            catch (AppForSEII2526.Web.API.ApiException ex)
+            {
+                if (ex.StatusCode == 201 || (ex.Response != null && ex.Response.Contains("Compra realizada correctamente")))
+                {
+                    try
+                    {
+                        var opciones = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                        var respuesta = JsonSerializer.Deserialize<RespuestaApiCompra>(ex.Response, opciones);
+
+                        if (respuesta != null && respuesta.CompraId > 0)
+                        {
+                            Logger.LogInformation($"Compra {respuesta.CompraId} creada con éxito. Redirigiendo a detalle.");
+                            FinalizarPedidoExitoso();
+                            NavManager.NavigateTo("/merchandising/seleccionar");
+                            return;
+                        }
+                    }
+                    catch
+                    {
+                        Logger.LogWarning("No se pudo leer el ID del JSON de respuesta.");
+                    }
+
+                    FinalizarPedidoExitoso();
+                    NavManager.NavigateTo("/merchandising/seleccionar");
+                    return;
+                }
+
+                errorMessage = $"Error del servidor: {ex.Message}";
+                Logger.LogError(ex, "Error API Merchandising");
+            }
+            catch (Exception ex)
+            {
+                errorMessage = "Error inesperado: " + ex.Message;
+                Logger.LogError(ex, "Error General Merchandising");
+            }
+        }
+    }
+
+    private void FinalizarPedidoExitoso()
+    {
+        StateContainer.CompraProcesada();
+    }
+}
