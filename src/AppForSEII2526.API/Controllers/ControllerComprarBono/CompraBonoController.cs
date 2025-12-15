@@ -159,14 +159,6 @@ namespace AppForSEII2526.API.Controllers.ControllerComprarBono
                     continue;
                 }
 
-                /*
-                if ( bonoEntity == null || bonoEntity.tipoBocadillo.Contains("integral"))
-                {
-                    ModelState.AddModelError("Bonos", $"Error, el bono no existe o tiene integral en su tipo");
-                    continue;
-                }
-                */
-
                 if (item.Cantidad <= 0)
                 {
                     ModelState.AddModelError("Bonos", $"Error, la cantidad solicitada para '{bonoEntity.nombre}' debe ser mayor que 0");
