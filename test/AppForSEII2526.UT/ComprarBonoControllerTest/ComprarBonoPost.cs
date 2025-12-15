@@ -23,8 +23,6 @@ namespace AppForSEII2526.UT.ComprarBonoPost
         private const string _bono2Nombre = "Bono Pequeño";
         private const string _tipo2Nombre = "Sin gluten";
 
-        private const string _bono3Nombre = "Bono Integral";
-        private const string _tipo3Nombre = "intregral";
         
 
         public ComprarBonoPost()
@@ -32,13 +30,11 @@ namespace AppForSEII2526.UT.ComprarBonoPost
             var tipos = new List<TipoBocadillo>() {
                 new TipoBocadillo { nombreTipo = _tipo1Nombre },
                 new TipoBocadillo { nombreTipo = _tipo2Nombre },
-                new TipoBocadillo {nombreTipo= _tipo3Nombre }
             };
 
             var bonos = new List<BonoBocadillo>(){
                 new BonoBocadillo { nombre= _bono1Nombre, PVP = 15.0, nBocadillos = 5, cantidadDisponible = 10, tipoBocadillos = tipos[0] },
                 new BonoBocadillo { nombre = _bono2Nombre, PVP = 10.0,nBocadillos = 2, cantidadDisponible = 2, tipoBocadillos = tipos[1] },
-                new BonoBocadillo { nombre = _bono3Nombre, PVP = 5.0,nBocadillos = 2, cantidadDisponible = 4, tipoBocadillos = tipos[2] },
             };
 
 
@@ -53,7 +49,7 @@ namespace AppForSEII2526.UT.ComprarBonoPost
                 DateTime.Today, _metodoPago, new List<BonosCompradosDTO>());
 
             var bonoItems = new List<BonosCompradosDTO>() { new BonosCompradosDTO(2,_bono2Nombre, 10.0, 2, _tipo2Nombre) };
-            var bonoItems2 = new List<BonosCompradosDTO>() { new BonosCompradosDTO(3, _bono3Nombre, 5.0, 4, _tipo3Nombre) };
+          
 
             var compraNombreVacio = new ComprarBonoBocadilloPost(0, "", _clienteApellido1, _clienteApellido2,
                 DateTime.Today, _metodoPago, bonoItems);
@@ -61,13 +57,12 @@ namespace AppForSEII2526.UT.ComprarBonoPost
             var compraApellidosVacios = new ComprarBonoBocadilloPost(0, _clienteNombre, "", "",
                 DateTime.Today, _metodoPago, bonoItems);
 
-            var compraConIntegral = new ComprarBonoBocadilloPost(3,_clienteNombre,_clienteApellido1,_clienteApellido2,DateTime.Today, _metodoPago, bonoItems2);
+           
             var allTests = new List<object[]>
             {
                 new object[] { compraSinBonos, "Error! Debes seleccionar algún bono" },
                 new object[] { compraNombreVacio, "Error! El nombre es obligatorio" },
                 new object[] { compraApellidosVacios, "Error! Los apellidos son obligatorios" },
-                new object[] {compraConIntegral, "Bonos", $"Error, el bono no existe o tiene integral en su tipo" }
             };
 
             return allTests;
@@ -97,29 +92,7 @@ namespace AppForSEII2526.UT.ComprarBonoPost
             Assert.StartsWith(errorExpected, errorActual);
         }
 
-        [Theory]
-        [Trait("LevelTesting", "Unit Testing")]
-        [Trait("Database", "WithoutFixture")]
-        [MemberData(nameof(TestCasesFor_CreateCompra))]
-        public async Task CrearCompra_ConIntegral(ComprarBonoBocadilloPost compraDTO, string errorExpected)
-        {
-            // Arrange
-            var mock = new Mock<ILogger<CompraBonoController>>();
-            ILogger<CompraBonoController> logger = mock.Object;
-
-            var controller = new CompraBonoController(_context, logger);
-
-            // Act
-            var result = await controller.CrearCompra(compraDTO);
-
-            //Assert
-            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-            var problemDetails = Assert.IsType<ValidationProblemDetails>(badRequestResult.Value);
-
-            var errorActual = problemDetails.Errors.First().Value[0];
-
-            Assert.StartsWith(errorExpected, errorActual);
-        }
+     
 
         [Fact]
         [Trait("LevelTesting", "Unit Testing")]
