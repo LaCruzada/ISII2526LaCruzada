@@ -10,55 +10,53 @@
 <h3>Publicar Reseña</h3>
 
 <div class="container-fluid">
-    <!-- Datos de la reseña -->
     <div class="card mb-4">
         <div class="card-header">Datos de la Reseña</div>
         <div class="card-body">
             <div class="row g-3">
                 <div class="col-md-4">
                     <label class="form-label">Nombre de usuario (opcional):</label>
-                    <input class="form-control" @bind="resenya.NombreUsuario" placeholder="Ej: Caridad" />
+                    <input id="NombreUsuario" class="form-control" @bind="resenya.NombreUsuario" placeholder="Ej: Caridad" />
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Título:</label>
-                    <input class="form-control" maxlength="20" required @bind="resenya.Titulo" placeholder="Ej: Sugerencia para..." />
+                    <input id="TituloResenya" class="form-control" maxlength="20" required @bind="resenya.Titulo" placeholder="Ej: Sugerencia para..." />
                     @if (!string.IsNullOrEmpty(errorTitulo))
                     {
-                        <div class="text-danger small">@errorTitulo</div>
+                        <div class="text-danger small" data-test-id="ErrorsShown_Titulo">@errorTitulo</div>
                     }
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Valoración general:</label>
-                    <select class="form-select" @bind="valoracionGeneralSeleccionada">
+                    <select id="ValoracionGeneral" class="form-select" @bind="valoracionGeneralSeleccionada">
                         <option value="">Selecciona:</option>
                         @foreach (var valor in Enum.GetValues<EnumValoracion_General>())
                         {
-                            <option value="@(1+(int)valor)">@(1+(int)valor) estrella(s)</option>
+                            <option value="@(1+(int)valor)">@(1 + (int)valor) estrella(s)</option>
                         }
                     </select>
                     @if (!string.IsNullOrEmpty(errorValoracion))
                     {
-                        <div class="text-danger small">@errorValoracion</div>
+                        <div class="text-danger small" data-test-id="ErrorsShown_Valoracion">@errorValoracion</div>
                     }
                 </div>
                 <div class="col-12">
                     <label class="form-label">Descripción:</label>
-                    <textarea class="form-control" maxlength="200" required @bind="resenya.Descripcion" placeholder="Escribe tu opinión..."></textarea>
+                    <textarea id="DescripcionResenya" class="form-control" maxlength="200" required @bind="resenya.Descripcion" placeholder="Escribe tu opinión..."></textarea>
                     @if (!string.IsNullOrEmpty(errorDescripcion))
                     {
-                        <div class="text-danger small">@errorDescripcion</div>
+                        <div class="text-danger small" data-test-id="ErrorsShown_Descripcion">@errorDescripcion</div>
                     }
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Bocadillos -->
     <div class="card mb-4">
         <div class="card-header">Bocadillos</div>
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-striped">
+                <table class="table table-striped" id="TableResumenBocadillos">
                     <thead>
                         <tr>
                             <th>Nombre</th>
@@ -76,10 +74,10 @@
                                 <td>@bocadillo.Tamano</td>
                                 <td>@bocadillo.Pvp.ToString("0.00") €</td>
                                 <td>
-                                    <input type="number" class="form-control" min="1" max="10" @bind="bocadillo.Puntuacion" />
+                                    <input id="Puntuacion_@bocadillo.BocadilloId" type="number" class="form-control" min="1" max="10" @bind="bocadillo.Puntuacion" />
                                     @if (erroresBocadillos.ContainsKey(i) && !string.IsNullOrEmpty(erroresBocadillos[i]))
                                     {
-                                        <div class="text-danger small">@erroresBocadillos[i]</div>
+                                        <div class="text-danger small" data-test-id="ErrorsShown_Bocadillo_@bocadillo.BocadilloId">@erroresBocadillos[i]</div>
                                     }
                                 </td>
                             </tr>
@@ -90,18 +88,18 @@
         </div>
     </div>
 
-    <!-- Botones -->
     <div class="d-flex justify-content-between">
-        <button type="button" class="btn btn-secondary" @onclick="VolverASeleccion">
+        <button id="ModificarBocadillos" type="button" class="btn btn-secondary" @onclick="VolverASeleccion">
             <i class="bi bi-arrow-left"></i> Modificar bocadillos
         </button>
-        <button type="button" class="btn btn-success btn-lg" @onclick="ValidarYConfirmar" disabled="@(!resenya.ResenyaBocadillos.Any())">
+        <button id="CrearResenya" type="button" class="btn btn-success btn-lg"
+                @onclick="ValidarYConfirmar"
+                disabled="@(!resenya.ResenyaBocadillos.Any())">
             Publicar reseña
         </button>
     </div>
 </div>
 
-<!-- Diálogo de confirmación -->
 @if (dialogoAbierto)
 {
     <Dialog Caption="Confirmar publicación"
@@ -131,7 +129,6 @@
         }
     }
 
-    // Variable para navegación posterior
     private int? idResenyaCreada = null;
 
     protected override void OnInitialized()
@@ -151,27 +148,23 @@
         erroresBocadillos.Clear();
         bool valido = true;
 
-        // Validación del título obligatorio
         if (string.IsNullOrWhiteSpace(resenya.Titulo))
         {
             errorTitulo = "El título es obligatorio.";
             valido = false;
         }
-        // Validación de que empiece por "Sugerencia para"
         else if (!resenya.Titulo.StartsWith("Sugerencia para"))
         {
             errorTitulo = "El título debe comenzar con 'Sugerencia para'.";
             valido = false;
         }
 
-        // Validación de la descripción
         if (string.IsNullOrWhiteSpace(resenya.Descripcion))
         {
             errorDescripcion = "La descripción es obligatoria.";
             valido = false;
         }
 
-        // Validación de la valoración general
         if (string.IsNullOrEmpty(valoracionGeneralSeleccionada) ||
             !int.TryParse(valoracionGeneralSeleccionada, out int val) ||
             val < (int)EnumValoracion_General.Una || val > (int)EnumValoracion_General.Cinco)
@@ -179,8 +172,6 @@
             errorValoracion = "La valoración general es obligatoria.";
             valido = false;
         }
-
-        // Validación de las puntuaciones de los bocadillos
         for (int i = 0; i < resenya.ResenyaBocadillos.Count; i++)
         {
             var bocadillo = resenya.ResenyaBocadillos.ElementAt(i);
@@ -196,7 +187,6 @@
             dialogoAbierto = true;
         }
     }
-
 
     private async Task AlCerrarDialogo(bool aceptado)
     {
@@ -233,7 +223,4 @@
             }
         }
     }
-
-    // Se ejecuta después del render para navegar de forma segura
-    
 }

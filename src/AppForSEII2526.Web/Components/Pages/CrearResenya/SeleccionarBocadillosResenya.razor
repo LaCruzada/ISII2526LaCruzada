@@ -109,11 +109,12 @@
                     </ul>
                 </div>
             </div>
-            <button class="btn btn-success mt-3 w-100"
+            <button id="CrearResenya" class="btn btn-success mt-3 w-100"
                     @onclick="CrearResenya"
                     disabled="@(!StateContainer.Resenya.ResenyaBocadillos.Any())">
                 Crear reseña
             </button>
+
         </div>
     </div>
 </div>
@@ -140,7 +141,6 @@
         isLoading = true;
         try
         {
-            // Llamada a la API con filtros
             var bocadillosAPI = await ApiClient.GetBocadillosParaResenyaAsync(nombreFiltro, minFiltro, maxFiltro);
 
             TodosLosBocadillos = bocadillosAPI.Select(b => new AppForSEII2526.API.DTOs.DTOsCrearResenya.BocadillosDTOs.BocadilloSeleccionadoDTO
