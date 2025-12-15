@@ -95,10 +95,24 @@ namespace AppForSEII2526.UT.ComprarBonoGet
             var controller = new CompraBonoController(_context, mock.Object);
 
             // Act
-            var result = await controller.GetCompra(0);
+            var result = await controller.GetCompra(999);
 
             // Assert
             Assert.IsType<NotFoundResult>(result);
+        }
+
+        [Fact]
+        public async Task GetCompra_idnegativo_test()
+        {
+            // Arrange
+            var mock = new Mock<ILogger<CompraBonoController>>();
+            var controller = new CompraBonoController(_context, mock.Object);
+
+            // Act
+            var result = await controller.GetCompra(-5);
+
+            // Assert
+            Assert.IsType<NotFoundObjectResult>(result);
         }
 
         [Fact]

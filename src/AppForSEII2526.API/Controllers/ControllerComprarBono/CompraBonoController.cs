@@ -31,10 +31,10 @@ namespace AppForSEII2526.API.Controllers.ControllerComprarBono
         [ProducesResponseType((int)HttpStatusCode.NotFound)]
         public async Task<ActionResult> GetCompra(int id)
         {
-            if (_context.CompraBono == null)
+
+            if(id <= 0)
             {
-                _logger.LogError("Error: No hay compras disponibles");
-                return NotFound();
+                return NotFound(new { message = "Pedido no encontrado por id igual o menor que cero" });
             }
 
             // Cargar la entidad completa con includes y luego mapear en memoria.
@@ -44,6 +44,12 @@ namespace AppForSEII2526.API.Controllers.ControllerComprarBono
                         .ThenInclude(b => b.tipoBocadillos)
                 .Include(cb => cb.usuarios) // cargar usuarios relacionados
                 .FirstOrDefaultAsync(cb => cb.CompraBonoId == id);
+
+            if (_context.CompraBono == null)
+            {
+                _logger.LogError("Error: No hay compras disponibles");
+                return NotFound();
+            }
 
             if (compra == null)
             {
@@ -152,8 +158,15 @@ namespace AppForSEII2526.API.Controllers.ControllerComprarBono
                     ModelState.AddModelError("Bonos", $"Error, el bono '{item?.BonoID}' no existe en nuestra tienda");
                     continue;
                 }
-                
-                
+
+                /*
+                if ( bonoEntity == null || bonoEntity.tipoBocadillo.Contains("integral"))
+                {
+                    ModelState.AddModelError("Bonos", $"Error, el bono no existe o tiene integral en su tipo");
+                    continue;
+                }
+                */
+
                 if (item.Cantidad <= 0)
                 {
                     ModelState.AddModelError("Bonos", $"Error, la cantidad solicitada para '{bonoEntity.nombre}' debe ser mayor que 0");
