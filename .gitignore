@@ -416,3 +416,5 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+/src/AppForSEII2526.Web/Program.cs
+/test/AppForSEII2526.UIT/BonosComprados_UIT/CU_BonosBocadillos_UIT.cs
