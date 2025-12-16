@@ -37,42 +37,90 @@ namespace AppForSEII2526.UIT.Resenya_UIT
         {
             _output.WriteLine("Buscando bocadillos con filtros");
 
-            WaitForBeingVisible(inputNombreBy);
+            var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
 
-            var inputNombre = _driver.FindElement(inputNombreBy);
-            inputNombre.Clear();
-            if (!string.IsNullOrEmpty(nombre))
-                inputNombre.SendKeys(nombre);
-
-            var inputMin = _driver.FindElement(inputPVPMinBy);
-            inputMin.Clear();
-            if (pvpMin.HasValue)
-                inputMin.SendKeys(pvpMin.Value.ToString());
-
-            var inputMax = _driver.FindElement(inputPVPMaxBy);
-            inputMax.Clear();
-            if (pvpMax.HasValue)
-                inputMax.SendKeys(pvpMax.Value.ToString());
-
-            _driver.FindElement(buttonBuscarBy).Click();
-            Thread.Sleep(1500);
-
-            try
+            // Input nombre
+            wait.Until(d => d.FindElement(inputNombreBy).Displayed);
+            RetryAction(() =>
             {
-                WaitForBeingVisible(tableBocadillosBy);
-            }
-            catch
+                var inputNombre = _driver.FindElement(inputNombreBy);
+                inputNombre.Clear();
+                if (!string.IsNullOrEmpty(nombre))
+                    inputNombre.SendKeys(nombre);
+            });
+
+            // Input PVP Min
+            RetryAction(() =>
             {
-                _output.WriteLine("No hay bocadillos que coincidan con el filtro");
+                var inputMin = _driver.FindElement(inputPVPMinBy);
+                inputMin.Clear();
+                if (pvpMin.HasValue)
+                    inputMin.SendKeys(pvpMin.Value.ToString("0.00"));
+            });
+
+            // Input PVP Max
+            RetryAction(() =>
+            {
+                var inputMax = _driver.FindElement(inputPVPMaxBy);
+                inputMax.Clear();
+                if (pvpMax.HasValue)
+                    inputMax.SendKeys(pvpMax.Value.ToString("0.00"));
+            });
+
+            // Click Buscar
+            RetryAction(() =>
+            {
+                var btnBuscar = _driver.FindElement(buttonBuscarBy);
+                ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", btnBuscar);
+            });
+
+            // Esperar a que la tabla se renderice y tenga al menos una fila
+            wait.Until(d =>
+            {
+                var table = d.FindElement(tableBocadillosBy);
+                return table.Displayed && table.FindElements(By.TagName("tr")).Count > 0;
+            });
+        }
+
+        // Función de retry ante StaleElementReferenceException
+        private void RetryAction(Action action, int retries = 3)
+        {
+            while (true)
+            {
+                try
+                {
+                    action();
+                    break;
+                }
+                catch (StaleElementReferenceException)
+                {
+                    if (--retries == 0) throw;
+                    Thread.Sleep(200);
+                }
             }
         }
+
+
 
         // Comprobar lista de bocadillos
         public bool CheckListOfBocadillos(List<string> expectedNames)
         {
-            WaitForBeingVisible(tableBocadillosBy);
+            var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
 
-            var rows = _driver.FindElements(tableRowsBy);
+            // Esperar tabla visible
+            wait.Until(d =>
+            {
+                var table = d.FindElement(tableBocadillosBy);
+                return table.Displayed && table.FindElements(By.TagName("tr")).Count > 0;
+            });
+
+            // Reintentar capturar filas
+            List<IWebElement> rows = null;
+            RetryAction(() =>
+            {
+                rows = _driver.FindElements(tableRowsBy).ToList();
+            });
+
             var nombresActuales = rows
                 .Select(r => r.FindElements(By.TagName("td")).FirstOrDefault()?.Text)
                 .Where(n => !string.IsNullOrEmpty(n))
@@ -90,6 +138,8 @@ namespace AppForSEII2526.UIT.Resenya_UIT
             _output.WriteLine("La lista de bocadillos mostrada es correcta");
             return true;
         }
+
+
 
         // Añadir bocadillo por nombre (ESC-01)
         public void AddBocadilloByName(string nombreBocadillo)

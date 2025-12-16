@@ -32,7 +32,7 @@
                         <option value="">Selecciona:</option>
                         @foreach (var valor in Enum.GetValues<EnumValoracion_General>())
                         {
-                            <option value="@(1+(int)valor)">@(1 + (int)valor) estrella(s)</option>
+                            <option value="@((int)valor)">@((int)valor) estrella(s)</option>
                         }
                     </select>
                     @if (!string.IsNullOrEmpty(errorValoracion))
@@ -92,7 +92,7 @@
         <button id="ModificarBocadillos" type="button" class="btn btn-secondary" @onclick="VolverASeleccion">
             <i class="bi bi-arrow-left"></i> Modificar bocadillos
         </button>
-        <button id="CrearResenya" type="button" class="btn btn-success btn-lg"
+        <button id="PublicarResenya" type="button" class="btn btn-success btn-lg"
                 @onclick="ValidarYConfirmar"
                 disabled="@(!resenya.ResenyaBocadillos.Any())">
             Publicar reseña

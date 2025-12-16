@@ -11,12 +11,12 @@ namespace AppForSEII2526.UIT.CrearResenya_UIT
     public class CU_CrearResenya_UIT : UC_UIT
     {
         private const string bocadillo1Nombre = "Bocadillo Vegano";
-        private const string bocadillo2Nombre = "Bocadillo Sin Gluten";
+        private const string bocadillo2Nombre = "Bocadillo Queso";
 
         private const string usuarioNombre = "Ana";
-        private const string tituloResenya = "¡Excelente!";
+        private const string tituloResenya = "Sugerencia para";
         private const string descripcionResenya = "Muy sabroso y recomendable.";
-        private const string valoracionGeneral = "5";
+        private const string valoracionGeneral = "3";
 
         public CU_CrearResenya_UIT(ITestOutputHelper output) : base(output) { }
 
@@ -37,23 +37,55 @@ namespace AppForSEII2526.UIT.CrearResenya_UIT
 
             Ir_A_CrearResenya();
 
+            // Selección de bocadillo
             selectPO.AddBocadilloByName(bocadillo1Nombre);
-            selectPO.ClickCrearResenya();
 
+            // Click en Crear Resenya
+            selectPO.WaitForBeingClickable(By.Id("CrearResenya"));
+            _driver.FindElement(By.Id("CrearResenya")).Click();
+
+            // Rellenar formulario
             postPO.SetNombreUsuario(usuarioNombre);
             postPO.SetTituloResenya(tituloResenya);
             postPO.SetDescripcionResenya(descripcionResenya);
             postPO.SetValoracionGeneral(valoracionGeneral);
-            postPO.SetPuntuacionBocadillo("1", "9"); // Ejemplo ID bocadillo
+            postPO.SetPuntuacionBocadillo("9");
 
+            // Publicar y confirmar modal
             postPO.PublicarResenya();
-            detallesPO.WaitForBeingVisible(By.Id("ResumenResenya"));
+            postPO.ConfirmarResenyaaModal();
 
-            Assert.Contains(usuarioNombre, _driver.PageSource);
-            Assert.Contains(tituloResenya, _driver.PageSource);
-            Assert.Contains(descripcionResenya, _driver.PageSource);
-            Assert.Contains(bocadillo1Nombre, _driver.PageSource);
+            // --- Verificación en tabla principal ---
+            var wait = new OpenQA.Selenium.Support.UI.WebDriverWait(_driver, TimeSpan.FromSeconds(10));
+            var tablaResenya = wait.Until(d => d.FindElement(By.CssSelector(".container-fluid > table:first-of-type")));
+            var filas = tablaResenya.FindElements(By.TagName("tr"));
+            var datos = new Dictionary<string, string>();
+            foreach (var fila in filas)
+            {
+                var th = fila.FindElement(By.TagName("th")).Text.Trim();
+                var td = fila.FindElement(By.TagName("td")).Text.Trim();
+                datos[th] = td;
+            }
+
+            Assert.Equal(usuarioNombre, datos["Usuario"]);
+            Assert.Equal(tituloResenya, datos["Título"]);
+            Assert.Equal(descripcionResenya, datos["Descripción"]);
+            Assert.Equal("Cuatro", datos["Valoración general"]);
+
+            // --- Verificación de bocadillos ---
+            var tablaBocadillos = _driver.FindElement(By.CssSelector(".container-fluid > table:nth-of-type(2) tbody"));
+            var filasBocadillos = tablaBocadillos.FindElements(By.TagName("tr"));
+            bool bocadilloEncontrado = filasBocadillos.Any(fila =>
+            {
+                var celdas = fila.FindElements(By.TagName("td"));
+                if (celdas.Count < 4) return false; // Por si hay fila "No hay bocadillos"
+                return celdas[0].Text.Trim() == bocadillo1Nombre &&
+                       celdas[3].Text.Trim() == "9"; // Puntuación
+            });
+
+            Assert.True(bocadilloEncontrado, "No se encontró el bocadillo evaluado en la tabla.");
         }
+
 
         [Fact]
         [Trait("LevelTesting", "Funcional Testing")]
@@ -63,7 +95,7 @@ namespace AppForSEII2526.UIT.CrearResenya_UIT
             var selectPO = new SelectBocadillosResenya_PO(_driver, _output);
 
             Ir_A_CrearResenya();
-            selectPO.SearchBocadillos("Vegano", null, null);
+            selectPO.SearchBocadillos("Vegano", 3.50, 3.90);
 
             Assert.True(selectPO.CheckListOfBocadillos(new List<string> { bocadillo1Nombre }));
         }
