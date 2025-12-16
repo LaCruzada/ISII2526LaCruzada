@@ -35,19 +35,20 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         builder.Entity<ResenyaBocadillo>().HasKey(pc => new { pc.BocadilloId, pc.ResenyaId });
         builder.Entity<CompraBocadillo>().HasKey(pc => new { pc.CompraId, pc.BocadilloId });
         
-        // Seed de TipoProducto
+  
         builder.Entity<TipoProducto>().HasData(
             new TipoProducto { TipoProductoId = 1, Nombre = "Camiseta" },
             new TipoProducto { TipoProductoId = 2, Nombre = "Taza" },
             new TipoProducto { TipoProductoId = 3, Nombre = "Gorro" }
         );
 
-        // Seed de Producto
+
         builder.Entity<Producto>().HasData(
             new Producto { ProductoId = 1, Nombre = "Camiseta Logo", PVP = 15.00m, Stock = 10, TipoProductoId = 1 },
             new Producto { ProductoId = 2, Nombre = "Camiseta Vintage", PVP = 18.50m, Stock = 3, TipoProductoId = 1 },
             new Producto { ProductoId = 3, Nombre = "Taza Café", PVP = 8.99m, Stock = 20, TipoProductoId = 2 },
             new Producto { ProductoId = 4, Nombre = "Gorro Invierno", PVP = 12.50m, Stock = 5, TipoProductoId = 3 }
         );
+
     }
 }
