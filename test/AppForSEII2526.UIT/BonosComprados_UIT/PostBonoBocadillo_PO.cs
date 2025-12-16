@@ -69,8 +69,10 @@ namespace AppForSEII2526.UIT.BonosComprados_UIT
 
         public void setMetodoPago(string metodoPago)
         {
-            var selectElement = new OpenQA.Selenium.Support.UI.SelectElement(_metodoPago());
-            selectElement.SelectByText(metodoPago);
+                var selectElement = _driver.FindElement(_metodoPagoBy);
+                var select = new SelectElement(selectElement);
+                select.SelectByValue(metodoPago);
+           
         }
 
         // Devuelve si el botón Submit está activo o no.
