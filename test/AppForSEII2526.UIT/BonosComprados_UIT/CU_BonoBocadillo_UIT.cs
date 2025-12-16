@@ -27,7 +27,7 @@ namespace AppForSEII2526.UIT.BonosComprados_UIT
         private const string clienteNombre = "Juan";
         private const string clienteApellido1 = "Pérez";
         private const string clienteApellido2 = "Saez";
-        private const string metodoPagoTarjeta = "Tarjeta de Crédito/Débito";
+        private const string metodoPagoTarjeta = "Paypal";
 
         public CU_BonosBocadillos_UIT(ITestOutputHelper output) : base(output)
         {
@@ -82,7 +82,7 @@ namespace AppForSEII2526.UIT.BonosComprados_UIT
                        _driver.PageSource.Contains("Compra de Bonos"));
             Assert.True(_driver.PageSource.Contains(clienteNombre));
             Assert.True(_driver.PageSource.Contains(clienteApellido1));
-            Assert.True(_driver.PageSource.Contains("Tarjeta"));
+            Assert.True(_driver.PageSource.Contains("Paypal"));
             Assert.True(_driver.PageSource.Contains("Fecha"));
             Assert.True(_driver.PageSource.Contains("Precio Total") ||
                        _driver.PageSource.Contains("Total"));
