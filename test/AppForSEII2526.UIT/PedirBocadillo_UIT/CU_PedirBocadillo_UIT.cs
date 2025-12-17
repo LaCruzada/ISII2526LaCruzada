@@ -134,5 +134,37 @@ namespace AppForSEII2526.UIT.PedirBocadillo_UIT
             string valorInput = createPO.GetNombreValue();
             Assert.Equal("NombrePersistente", valorInput);
         }
+
+        [Fact]
+        [Trait("LevelTesting", "Funcional Testing")]
+        [Trait("CasoPrueba", "HU-PB-Examen")]
+        public void HU_PB_Examen()
+        {
+            var selectPO = new SelectPedirBocadillo_PO(_driver, _output);
+            var createPO = new CreatePedirBocadillo_PO(_driver, _output);
+            var detallePO = new DetallePedido_PO(_driver, _output);
+
+            Ir_A_Seleccion();
+
+            selectPO.SearchBocadillos("Serranito");
+            selectPO.AddFirstBocadilloToCart();
+            Assert.False(selectPO.ComprarNotAvailable());
+            selectPO.SearchBocadillos("Calamares");
+            selectPO.AddFirstBocadilloToCart();
+            Assert.False(selectPO.ComprarNotAvailable());
+
+            selectPO.RemoveItemFromCart(0);
+            Assert.False(selectPO.ComprarNotAvailable());
+            selectPO.ClickTramitar();
+
+            createPO.RellenarFormulario(CLIENTE_NOMBRE, CLIENTE_APELLIDO, CLIENTE_EMAIL, PAGO_GOOGLE);
+            createPO.ContinuarCompra();
+            createPO.ConfirmarCompraModal();
+
+            Thread.Sleep(2000);
+            Assert.True(detallePO.ContieneTexto(CLIENTE_NOMBRE));
+            Assert.True(detallePO.ContieneTexto("Calamares"));
+
+        }
     }
 }
