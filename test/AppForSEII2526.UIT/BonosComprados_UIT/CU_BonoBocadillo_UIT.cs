@@ -223,6 +223,54 @@ namespace AppForSEII2526.UIT.BonosComprados_UIT
             Assert.Equal(clienteNombre, valorNombre);
         }
 
+        [Fact]
+        [Trait("LevelTesting", "Funcional Testing")]
+        [Trait("CasoPrueba", "ESC-07")]
+        public void ESC_07_ExamenSprint3()
+        {
+            var selectBonoBocadillo_PO = new SelectBonoBocadillo_PO(_driver, _output);
+            var postBonoBocadillo_PO = new PostBonoBocadillo_PO(_driver, _output);
+            var detallesBonoBocadillo_PO = new DetallesBonoBocadillo_PO(_driver, _output);
+
+            Inicio();
+            Ir_A_ComprarBonos();
+
+            selectBonoBocadillo_PO.SearchBonos("Bono Vegano", "");
+            selectBonoBocadillo_PO.AddBonoToCartByName(bono1Nombre);
+
+            selectBonoBocadillo_PO.SearchBonos("", "");
+            selectBonoBocadillo_PO.RemoveBonoFromCart(bono1Nombre);
+
+            selectBonoBocadillo_PO.SearchBonos("", "Sin Gluten");
+            selectBonoBocadillo_PO.AddBonoToCartByName(bono2Nombre);
+            
+
+
+            selectBonoBocadillo_PO.WaitForBeingClickable(By.Id("ComprarBonos"));
+            _driver.FindElement(By.Id("ComprarBonos")).Click();
+            Thread.Sleep(1500);
+
+            postBonoBocadillo_PO.setNombre(clienteNombre);
+            postBonoBocadillo_PO.setApellido1(clienteApellido1);
+            postBonoBocadillo_PO.setApellido2(clienteApellido2);
+            postBonoBocadillo_PO.setMetodoPago(metodoPagoTarjeta);
+
+            postBonoBocadillo_PO.ContinuarCompra();
+            Thread.Sleep(500);
+            postBonoBocadillo_PO.ConfirmarCompra();
+            Thread.Sleep(2000);
+
+            detallesBonoBocadillo_PO.WaitForBeingVisible(By.Id("BonosComprados"));
+
+            Assert.True(_driver.PageSource.Contains("Detalle de la Compra") ||
+                       _driver.PageSource.Contains("Compra de Bonos"));
+            Assert.True(_driver.PageSource.Contains(clienteNombre));
+            Assert.True(_driver.PageSource.Contains(clienteApellido1));
+            Assert.True(_driver.PageSource.Contains("Paypal"));
+            Assert.True(_driver.PageSource.Contains("Fecha"));
+            Assert.True(_driver.PageSource.Contains("Precio Total") ||
+                       _driver.PageSource.Contains("Total"));
+        }
     }
 }
 
