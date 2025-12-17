@@ -38,6 +38,7 @@ namespace AppForSEII2526.UIT.PedirBocadillo_UIT
 
             input = _driver.FindElement(By.Id("filtroNombre"));
             input.SendKeys(nombre);
+            input.SendKeys(Keys.Enter);
 
             var btn = _driver.FindElement(By.Id("btnBuscar"));
             ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", btn);
@@ -70,6 +71,19 @@ namespace AppForSEII2526.UIT.PedirBocadillo_UIT
             {
                 ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", botonesBorrar.First());
                 Thread.Sleep(1000); 
+            }
+        }
+
+        public void RemoveItemFromCart(int indice)
+        {
+            Thread.Sleep(500);
+            var botonesBorrar = _driver.FindElements(By.CssSelector(".card-body .btn-danger"));
+
+            if (botonesBorrar.Count > indice)
+            {
+                var boton = botonesBorrar[indice];
+                ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", botonesBorrar.First());
+                Thread.Sleep(1000);
             }
         }
 
@@ -109,5 +123,7 @@ namespace AppForSEII2526.UIT.PedirBocadillo_UIT
         {
             return _driver.PageSource.Contains(nombreEsperado);
         }
+
+      
     }
 }
