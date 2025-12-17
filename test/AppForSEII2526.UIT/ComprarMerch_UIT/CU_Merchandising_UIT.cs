@@ -136,5 +136,31 @@ namespace AppForSEII2526.UIT.ComprarMerch_UIT
             string valorInput = createPO.GetNombreValue();
             Assert.Equal("NombrePersistente", valorInput);
         }
+
+        [Fact]
+        [Trait("LevelTesting", "Funcional Testing")]
+        [Trait("CasoPrueba", "HU-CM-07-Examen-Sprint3")]
+        public void HU_CM_07_Sprint3()
+        {
+            var selectPO = new SelectMerch_PO(_driver, _output);
+            var createPO = new CreateMerch_PO(_driver, _output);
+            var detallePO = new DetalleMerch_PO(_driver, _output);
+
+            Ir_A_Seleccion();
+
+            selectPO.AddFirstProductoToCart();
+            selectPO.FiltrarPorTipo("Taza");
+            selectPO.AddFirstProductoToCart();
+            selectPO.RemoveFirstItemFromCart();
+
+            selectPO.ClickTramitar();
+
+            createPO.RellenarFormulario(CLIENTE_NOMBRE, CLIENTE_APELLIDO, CLIENTE_EMAIL, CLIENTE_DIRECCION, PAGO_TARJETA);
+            createPO.ContinuarCompra();
+            createPO.ConfirmarCompraModal();
+
+            //Debería volver a seleccionar tras realizar una compra correctamente
+            Assert.True(_driver.Url.Contains("seleccionar"));
+        }
     }
 }
