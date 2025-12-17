@@ -12,6 +12,7 @@ namespace AppForSEII2526.UIT.CrearResenya_UIT
     {
         private const string bocadillo1Nombre = "Bocadillo Vegano";
         private const string bocadillo2Nombre = "Bocadillo Queso";
+        private const string bocadillo3Nombre = "Bocadillo Sin Gluten";
 
         private const string usuarioNombre = "Ana";
         private const string tituloResenya = "Sugerencia para";
@@ -179,5 +180,72 @@ namespace AppForSEII2526.UIT.CrearResenya_UIT
             var tituloInput = _driver.FindElement(By.Id("TituloResenya"));
             Assert.Equal(tituloResenya, tituloInput.GetAttribute("value"));
         }
+        [Fact]
+        [Trait("LevelTesting", "Funcional Testing")]
+        [Trait("CasoPrueba", "ESC-01")]
+        public void ESC_07_Examen_Sprint3()
+        {
+            var selectPO = new SelectBocadillosResenya_PO(_driver, _output);
+            var postPO = new PostCrearResenya_PO(_driver, _output);
+            var detallesPO = new DetailsResenya_PO(_driver, _output);
+
+            Ir_A_CrearResenya();
+
+            // Selección de bocadillo Queso
+            selectPO.AddBocadilloByName(bocadillo1Nombre);
+
+            // Filtrar por PVP
+            selectPO.SearchBocadillos("", 3, 0);
+
+            // Selección de bocadillo Vegano
+            selectPO.AddBocadilloByName(bocadillo3Nombre);
+
+            // Eliminar Bocadillo Queso del carrito
+            selectPO.RemoveBocadilloFromCart(bocadillo1Nombre);
+
+            // Click en Crear Resenya
+            selectPO.WaitForBeingClickable(By.Id("CrearResenya"));
+            _driver.FindElement(By.Id("CrearResenya")).Click();
+
+            // Rellenar formulario
+            postPO.SetNombreUsuario(usuarioNombre);
+            postPO.SetTituloResenya(tituloResenya);
+            postPO.SetDescripcionResenya(descripcionResenya);
+            postPO.SetValoracionGeneral(valoracionGeneral);
+            postPO.SetPuntuacionBocadillo("9");
+
+            // Publicar y confirmar modal
+            postPO.PublicarResenya();
+            postPO.ConfirmarResenyaaModal();
+
+            // --- Verificación en tabla principal ---
+            var wait = new OpenQA.Selenium.Support.UI.WebDriverWait(_driver, TimeSpan.FromSeconds(10));
+            var tablaResenya = wait.Until(d => d.FindElement(By.CssSelector(".container-fluid > table:first-of-type")));
+            var filas = tablaResenya.FindElements(By.TagName("tr"));
+            var datos = new Dictionary<string, string>();
+            foreach (var fila in filas)
+            {
+                var th = fila.FindElement(By.TagName("th")).Text.Trim();
+                var td = fila.FindElement(By.TagName("td")).Text.Trim();
+                datos[th] = td;
+            }
+
+            Assert.Equal(usuarioNombre, datos["Usuario"]);
+            Assert.Equal(tituloResenya, datos["Título"]);
+            Assert.Equal(descripcionResenya, datos["Descripción"]);
+            Assert.Equal("Cuatro", datos["Valoración general"]);
+
+            // --- Verificación de bocadillos ---
+            var tablaBocadillos = _driver.FindElement(By.CssSelector(".container-fluid > table:nth-of-type(2) tbody"));
+            var filasBocadillos = tablaBocadillos.FindElements(By.TagName("tr"));
+            bool bocadilloEncontrado = filasBocadillos.Any(fila =>
+            {
+                var celdas = fila.FindElements(By.TagName("td"));
+                return celdas[0].Text.Trim() == bocadillo3Nombre;
+            });
+
+            Assert.True(bocadilloEncontrado, "No se encontró el bocadillo evaluado en la tabla.");
+        }
+
     }
 }
